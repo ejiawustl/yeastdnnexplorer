@@ -64,7 +64,7 @@ def generate_perturbation_effects(
     unaffected_std: float,
     affected_mean: float,
     affected_std: float,
-):
+) -> torch.Tensor:
     """
     Generate perturbation effects for genes.
 
@@ -104,7 +104,7 @@ def generate_perturbation_effects(
 
 def generate_binding_effects(
     total: int, signal_group_size: int, unaffected_lambda: float, affected_lambda: float
-):
+) -> torch.Tensor:
     """
     Generate binding effects for genes.
 
