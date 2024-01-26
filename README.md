@@ -1,8 +1,9 @@
 # yeastdnnexplorer
 
+[![gh-pages](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml/badge.svg)](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml)
 [![style](https://img.shields.io/badge/%20style-sphinx-0a507a.svg)](https://www.sphinx-doc.org/en/master/usage/index.html)
-
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Pytest](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/ci.yml)
+[![gh-pages](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml/badge.svg)](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml)
 
 ## Documentation
 
