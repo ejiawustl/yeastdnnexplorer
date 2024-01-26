@@ -1,0 +1,59 @@
+{
+    "name": "yeastregulatorydb_dev",
+    "dockerComposeFile": ["../cpu.yml"],  // Path to your Docker Compose file
+    "service": "dev",  // Name of the service in your Docker Compose file
+    "workspaceFolder": "/app"
+    // "mounts": [
+    //     {
+    //         "source": "./.devcontainer/bash_history",
+    //         "target": "/home/dev-user/.bash_history",
+    //         "type": "bind"
+    //     },
+    //     {
+    //         "source": "~/.ssh",
+    //         "target": "/home/dev-user/.ssh",
+    //         "type": "bind"
+    //     }
+    // ],
+    // "customizations": {
+    //     "vscode": {
+    //         "settings": {
+    //             "editor.formatOnSave": true,
+    //             "[python]": {
+    //                 "analysis.autoImportCompletions": true,
+    //                 "analysis.typeCheckingMode": "basic",
+    //                 "defaultInterpreterPath": "/usr/local/bin/python",
+    //                 "editor.codeActionsOnSave": {
+    //                     "source.organizeImports": true
+    //                 },
+    //                 "formatting.blackPath": "/usr/local/bin/black",
+    //                 "formatting.provider": "black",
+    //                 "languageServer": "Pylance",
+    //                 "linting.enabled": true,
+    //                 "linting.flake8Enabled": true,
+    //                 "linting.flake8Path": "/usr/local/bin/flake8",
+    //                 "linting.mypyEnabled": true,
+    //                 "linting.mypyPath": "/usr/local/bin/mypy",
+    //                 "linting.pycodestylePath": "/usr/local/bin/pycodestyle",
+    //                 "linting.pylintEnabled": true,
+    //                 "linting.pylintPath": "/usr/local/bin/pylint"
+    //             }
+    //         },
+    //         "extensions": [
+    //             "davidanson.vscode-markdownlint",
+    //             "mrmlnc.vscode-duplicate",
+    //             "visualstudioexptteam.vscodeintellicode",
+    //             "visualstudioexptteam.intellicode-api-usage-examples",
+    //             "ms-python.python",
+    //             "ms-python.vscode-pylance",
+    //             "ms-python.isort",
+    //             "ms-python.black-formatter",
+    //             "GitHub.copilot",
+    //             "ms-azuretools.vscode-docker",
+    //             "github.vscode-github-actions",
+    //             "mechatroner.rainbow-csv"
+    //         ]
+    //     }
+    // },
+    // "postCreateCommand": "cat .devcontainer/bashrc.override.sh >> ~/.bashrc"
+}

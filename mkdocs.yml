@@ -1,0 +1,34 @@
+site_name: yeastdnnexplorer
+site_description: "A collection of objects and functions to work with calling cards sequencing tools"
+site_author: "ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>"
+# TODO: update this when moved to brentlab
+site_url: "https://cmatkhan.github.io/yeastdnnexplorer/"
+# TODO: update this when moved to brentlab
+repo_url: "https://github.com/cmatKhan/yeastdnnexplorer"
+repo_name: "yeastdnnexplorer"
+edit_uri: "edit/master/docs/"
+watch: ['yeastdnnexplorer', 'docs']
+
+theme:
+  name: material
+
+plugins:
+- search
+- autorefs
+- section-index
+- mkdocstrings:
+    handlers:
+          python:
+            paths: [yeastdnnexplorer]  # search packages in the src folder
+            docstring_style: 'spinx'
+            merge_init_into_class: True
+
+nav:
+- Home:
+    - index.md
+
+markdown_extensions:
+    - smarty
+    - toc:
+        permalink: True
+    - sane_lists

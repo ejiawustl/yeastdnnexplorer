@@ -1,0 +1,16 @@
+version: '3'
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: ./compose/Dockerfile
+    volumes:
+      - .:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+    command: ["bash", "-c", "poetry run python verify_gpu.py"]
