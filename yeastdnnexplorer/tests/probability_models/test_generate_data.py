@@ -5,19 +5,19 @@ import torch
 
 from yeastdnnexplorer.probability_models.generate_data import (
     generate_binding_effects,
-    generate_gene_populations,
+    generate_gene_population,
     generate_perturbation_binding_data,
     generate_perturbation_effects,
     generate_pvalues,
 )
 
 
-def test_generate_gene_populations():
+def test_generate_gene_population():
     total_genes = 1000
     signal_ratio = 0.3
     signal_group_size = int(total_genes * signal_ratio)
 
-    gene_populations = generate_gene_populations(total_genes, signal_ratio)
+    gene_populations = generate_gene_population(total_genes, signal_ratio)
 
     # Check if the output is a 2D tensor
     assert gene_populations.ndim == 2
@@ -39,7 +39,7 @@ def test_generate_gene_populations():
 
 @pytest.mark.parametrize("total, ratio", [(1000, 0.3), (500, 0.5), (2000, 0.1)])
 def test_gene_populations(total, ratio):
-    gene_populations = generate_gene_populations(total, ratio)
+    gene_populations = generate_gene_population(total, ratio)
     signal_group_size = int(total * ratio)
 
     assert gene_populations.shape == (total, 2)
@@ -50,10 +50,10 @@ def test_gene_populations(total, ratio):
 def test_gene_populations_invalid_input():
     with pytest.raises(ValueError):
         # invalid string input
-        generate_gene_populations(total="1000", signal_group=0.3)
+        generate_gene_population(total="1000", signal_group=0.3)
 
     with pytest.raises(ValueError):
-        generate_gene_populations(total=1000, signal_group=1.2)
+        generate_gene_population(total=1000, signal_group=1.2)
 
     with pytest.raises(ValueError):
         generate_perturbation_binding_data(torch.rand((100, 1)))  # Invalid shape

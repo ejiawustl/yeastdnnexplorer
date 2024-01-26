@@ -2,9 +2,9 @@ site_name: yeastdnnexplorer
 site_description: "A collection of objects and functions to work with calling cards sequencing tools"
 site_author: "ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>"
 # TODO: update this when moved to brentlab
-site_url: "https://cmatkhan.github.io/yeastdnnexplorer/"
+site_url: "https://brentlab.github.io/yeastdnnexplorer/"
 # TODO: update this when moved to brentlab
-repo_url: "https://github.com/cmatKhan/yeastdnnexplorer"
+repo_url: "https://github.com/brentlab/yeastdnnexplorer"
 repo_name: "yeastdnnexplorer"
 edit_uri: "edit/master/docs/"
 watch: ['yeastdnnexplorer', 'docs']
@@ -16,16 +16,27 @@ plugins:
 - search
 - autorefs
 - section-index
+- mknotebooks
 - mkdocstrings:
     handlers:
           python:
             paths: [yeastdnnexplorer]  # search packages in the src folder
-            docstring_style: 'spinx'
             merge_init_into_class: True
+            options:
+              docstring_style: 'sphinx'
 
 nav:
 - Home:
     - index.md
+- Tutorials:
+  - Generate in silico data: tutorials/generate_in_silico_data.ipynb
+- API:
+    - Probability Models:
+      - Generate Gene Population: probability_models/generate_gene_population.md
+      - probability_models/generate_perturbation_binding_data.md
+      - probability_models/generate_perturbation_effects.md
+      - probability_models/generate_binding_effects.md
+      - probability_models/generate_pvalues.md
 
 markdown_extensions:
     - smarty

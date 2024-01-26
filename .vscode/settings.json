@@ -5,5 +5,8 @@
         "pval",
         "pvalues",
         "randperm"
-    ]
+    ],
+    "[markdown]": {
+        "editor.formatOnSave": false
+    }
 }

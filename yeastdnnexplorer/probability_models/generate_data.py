@@ -6,7 +6,7 @@ import torch
 logger = logging.getLogger(__name__)
 
 
-def generate_gene_populations(
+def generate_gene_population(
     total: int = 1000, signal_group: float = 0.3
 ) -> torch.Tensor:
     """
@@ -200,7 +200,7 @@ def generate_perturbation_binding_data(
 
     :param gene_populations: A tensor where the first column is the gene/feature
         identifier and the second column is binary indicating whether the gene
-        is in the signal group or not. See generate_gene_populations() for
+        is in the signal group or not. See generate_gene_population() for
         more details.
     :type gene_populations: torch.Tensor
     :param unaffected_perturbation_abs_mean: The absolute mean of the
