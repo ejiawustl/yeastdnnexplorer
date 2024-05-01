@@ -12,19 +12,25 @@
         <meta name="author" content="ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>">
       
       
+        <link rel="canonical" href="https://brentlab.github.io/yeastdnnexplorer/tutorials/hyperparameter_sweep/">
       
       
+        <link rel="prev" href="../generate_in_silico_data/">
       
-      <link rel="icon" href="/yeastdnnexplorer/assets/images/favicon.png">
+      
+        <link rel="next" href="../lightning_crash_course/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.18">
     
     
       
-        <title>yeastdnnexplorer</title>
+        <title>Hyperparameter Sweep - yeastdnnexplorer</title>
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
       
       
 
@@ -43,15 +49,15 @@
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/ansi-colours.css">
+      <link rel="stylesheet" href="../../css/ansi-colours.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/jupyter-cells.css">
+      <link rel="stylesheet" href="../../css/jupyter-cells.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/pandas-dataframe.css">
+      <link rel="stylesheet" href="../../css/pandas-dataframe.css">
     
-    <script>__md_scope=new URL("/yeastdnnexplorer/",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -81,7 +87,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -101,7 +107,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Hyperparameter Sweep
             
           </span>
         </div>
@@ -188,7 +194,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -218,7 +224,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -235,17 +241,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -259,7 +267,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -273,7 +281,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/generate_in_silico_data/" class="md-nav__link">
+      <a href="../generate_in_silico_data/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -291,10 +299,17 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/hyperparameter_sweep/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -303,6 +318,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -315,7 +331,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/lightning_crash_course/" class="md-nav__link">
+      <a href="../lightning_crash_course/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -336,7 +352,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/testing_model_metrics/" class="md-nav__link">
+      <a href="../testing_model_metrics/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -357,7 +373,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/visualizing_and_testing_data_generation_methods/" class="md-nav__link">
+      <a href="../visualizing_and_testing_data_generation_methods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -455,7 +471,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/synthetic_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/synthetic_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -476,7 +492,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/real_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/real_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -517,7 +533,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/ml_models/customizable_model/" class="md-nav__link ">
+            <a href="../../ml_models/customizable_model/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -548,7 +564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_compute_nrmse/" class="md-nav__link">
+      <a href="../../ml_models/metrics_compute_nrmse/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -569,7 +585,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_smse/" class="md-nav__link">
+      <a href="../../ml_models/metrics_smse/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -590,7 +606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/simple_model/" class="md-nav__link">
+      <a href="../../ml_models/simple_model/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -631,7 +647,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/probability_models/default_perturbation_effect_adjustment_function/" class="md-nav__link ">
+            <a href="../../probability_models/default_perturbation_effect_adjustment_function/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -662,7 +678,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/GenePopulation/" class="md-nav__link">
+      <a href="../../probability_models/GenePopulation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -683,7 +699,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_binding_effects/" class="md-nav__link">
+      <a href="../../probability_models/generate_binding_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -704,7 +720,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_gene_population/" class="md-nav__link">
+      <a href="../../probability_models/generate_gene_population/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -725,7 +741,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_perturbation_effects/" class="md-nav__link">
+      <a href="../../probability_models/generate_perturbation_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -746,7 +762,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_pvalues/" class="md-nav__link">
+      <a href="../../probability_models/generate_pvalues/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -767,7 +783,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
+      <a href="../../probability_models/perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -788,7 +804,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
+      <a href="../../probability_models/perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -845,8 +861,314 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+  
+  
+
+
+  <h1>Hyperparameter Sweep</h1>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script>
+(function() {
+  function addWidgetsRenderer() {
+    var requireJsScript = document.createElement('script');
+    requireJsScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js';
+
+    var mimeElement = document.querySelector('script[type="application/vnd.jupyter.widget-view+json"]');
+    var jupyterWidgetsScript = document.createElement('script');
+    var widgetRendererSrc = 'https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js';
+    var widgetState;
+
+    // Fallback for older version:
+    try {
+      widgetState = mimeElement && JSON.parse(mimeElement.innerHTML);
+
+      if (widgetState && (widgetState.version_major < 2 || !widgetState.version_major)) {
+        widgetRendererSrc = 'jupyter-js-widgets@*/dist/embed.js';
+      }
+    } catch(e) {}
+
+    jupyterWidgetsScript.src = widgetRendererSrc;
+
+    document.body.appendChild(requireJsScript);
+    document.body.appendChild(jupyterWidgetsScript);
+  }
+
+  document.addEventListener('DOMContentLoaded', addWidgetsRenderer);
+}());
+</script>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This notebook introduces how to perform a hyperparameter sweep to find the best hyperparameters for our model using the Optuna library. Feel free to modify the objective function if you would like to test other hyperparameters or values.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># imports 
+import argparse
+from argparse import Namespace
+
+from pytorch_lightning import Trainer, LightningModule, seed_everything
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+from torchsummary import summary
+
+from yeastdnnexplorer.data_loaders.synthetic_data_loader import SyntheticDataLoader
+from yeastdnnexplorer.ml_models.simple_model import SimpleModel
+from yeastdnnexplorer.ml_models.customizable_model import CustomizableModel
+
+import optuna
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# set random seed for reproducability
+seed_everything(42)
+</code></pre>
+
+
+</div>
+<div class="output_wrapper">
+<div class="output">
+<div class="output_area">
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>
+<code>Seed set to 42
+</code>
+</pre>
+</div>
+</div>
+<div class="output_area">
+<div class="output_text output_subarea output_execute_result">
+<pre>
+<code>42</code>
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here we define loggers and checkpoints for our model. Checkpoints tell pytorch when to save instances of the model (that can be loaded and inspected later) and loggers tell pytorch how to format the metrics that the model logs during its training. </p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># Checkpoint to save the best version of model (during the entire training process) based on the metric passed into &quot;monitor&quot;
+best_model_checkpoint = ModelCheckpoint(
+    monitor=&quot;val_mse&quot;,  # You can modify this to save the best model based on any other metric that the model you're testing tracks and reports
+    mode=&quot;min&quot;,
+    filename=&quot;best-model-{epoch:02d}-{val_loss:.2f}.ckpt&quot;,
+    save_top_k=1,  # Can modify this to save the top k models
+)
+
+# Callback to save checkpoints every 2 epochs, regardless of performance
+periodic_checkpoint = ModelCheckpoint(
+    filename=&quot;periodic-{epoch:02d}.ckpt&quot;,
+    every_n_epochs=2,
+    save_top_k=-1,  # Setting -1 saves all checkpoints
+)
+
+# define loggers for the model
+tb_logger = TensorBoardLogger(&quot;logs/tensorboard_logs&quot;)
+csv_logger = CSVLogger(&quot;logs/csv_logs&quot;)
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now we perform our hyperparameter sweep using the Optuna library. To do this, we need to define an objective function that returns a scalar value. This scalar value will be the value that our sweep is attempting to minimize. We train one instance of our model inside each call to the objective function (each model on each iteration will use a different selection of hyperparameters). In our objective function, we return the validation mse associated with the instance of the model. This is because we would like to find the combination of hyperparameters that leads to the lowest validation mse. We use validation mse instead of test mse since we do not want to risk fitting to the test data at all while tuning hyperparameters.</p>
+<p>If you&rsquo;d like to try different hyperparameters, you just need to modify the list of possible values corresponding to the hyperparameter in question.</p>
+<p>If you&rsquo;d like to run the hyperparamter sweep on real data instead of synthetic data, simply swap out the synthetic data loader for the real data loader.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># on each call to the objective function, it will choose a hyperparameter value from each of the suggest_categorical arrays and pass them into the model
+    # this allows us to test many different hyperparameter configurations during our sweep
+
+def objective(trial):
+    # model hyperparameters
+    lr = trial.suggest_categorical(&quot;lr&quot;, [0.01])
+    hidden_layer_num = trial.suggest_categorical(&quot;hidden_layer_num&quot;, [1, 2, 3, 5])
+    activation = trial.suggest_categorical(
+        &quot;activation&quot;, [&quot;ReLU&quot;, &quot;Sigmoid&quot;, &quot;Tanh&quot;, &quot;LeakyReLU&quot;]
+    )
+    optimizer = trial.suggest_categorical(&quot;optimizer&quot;, [&quot;Adam&quot;, &quot;SGD&quot;, &quot;RMSprop&quot;])
+    L2_regularization_term = trial.suggest_categorical(
+        &quot;L2_regularization_term&quot;, [0.0, 0.1]
+    )
+    dropout_rate = trial.suggest_categorical(
+        &quot;dropout_rate&quot;, [0.0, 0.5]
+    )
+
+    # data module hyperparameters
+    batch_size = trial.suggest_categorical(&quot;batch_size&quot;, [32])
+
+    # training hyperparameters
+    max_epochs = trial.suggest_categorical(
+        &quot;max_epochs&quot;, [1]
+    ) # default is 10
+
+    # defining what to pass in for the hidden layer sizes list based on the number of hidden layers
+    hidden_layer_sizes_configurations = {
+        1: [[64], [256]],
+        2: [[64, 32], [256, 64]],
+        3: [[256, 128, 32], [512, 256, 64]],
+        5: [[512, 256, 128, 64, 32]],
+    }
+    hidden_layer_sizes = trial.suggest_categorical(
+        f&quot;hidden_layer_sizes_{hidden_layer_num}_layers&quot;,
+        hidden_layer_sizes_configurations[hidden_layer_num],
+    )
+
+    print(&quot;=&quot; * 70)
+    print(&quot;About to create model with the following hyperparameters:&quot;)
+    print(f&quot;lr: {lr}&quot;)
+    print(f&quot;hidden_layer_num: {hidden_layer_num}&quot;)
+    print(f&quot;hidden_layer_sizes: {hidden_layer_sizes}&quot;)
+    print(f&quot;activation: {activation}&quot;)
+    print(f&quot;optimizer: {optimizer}&quot;)
+    print(f&quot;L2_regularization_term: {L2_regularization_term}&quot;)
+    print(f&quot;dropout_rate: {dropout_rate}&quot;)
+    print(f&quot;batch_size: {batch_size}&quot;)
+    print(f&quot;max_epochs: {max_epochs}&quot;)
+    print(&quot;&quot;)
+
+    # create data module
+    data_module = SyntheticDataLoader(
+        batch_size=batch_size,
+        num_genes=4000,
+        signal_mean=3.0,
+        signal=[0.5] * 10,
+        n_sample=[1, 2, 2, 4, 4],
+        val_size=0.1,
+        test_size=0.1,
+        random_state=42,
+        max_mean_adjustment=3.0,
+    )
+
+    num_tfs = sum(data_module.n_sample)  # sum of all n_sample is the number of TFs
+
+    # create model
+    model = CustomizableModel(
+        input_dim=num_tfs,
+        output_dim=num_tfs,
+        lr=lr,
+        hidden_layer_num=hidden_layer_num,
+        hidden_layer_sizes=hidden_layer_sizes,
+        activation=activation,
+        optimizer=optimizer,
+        L2_regularization_term=L2_regularization_term,
+        dropout_rate=dropout_rate,
+    )
+
+    # create trainer
+    trainer = Trainer(
+        max_epochs=max_epochs,
+        deterministic=True,
+        accelerator=&quot;cpu&quot;,
+        # callbacks and loggers are commented out for now since running a large sweep would generate an unnecessarily huge amount of checkpoints and logs
+        # callbacks=[best_model_checkpoint, periodic_checkpoint],
+        # logger=[tb_logger, csv_logger],
+    )
+
+    # train model
+    trainer.fit(model, data_module)
+
+    # get best validation loss from the model
+    return trainer.callback_metrics[&quot;val_mse&quot;]
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now we define an optuna study, which represents our hyperparameter sweep. It will run the objective function n_trials times and choose the model that gave the best val_mse across all of those trials with different hyperparameters. Note that this will create a very large amount of output as it will show training stats for every model. This is why we print out the best params and loss in a separate cell.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python">STUDY_NAME = &quot;CustomizableModelHyperparameterSweep3&quot;
+NUM_TRIALS = 5 # you will need a lot more than 5 trials if you have many possible combinations of hyperparams
+
+# Perform hyperparameter optimization using Optuna
+study = optuna.create_study(
+    direction=&quot;minimize&quot;, # we want to minimize the val_mse
+    study_name=STUDY_NAME,
+    # storage=&quot;sqlite:///db.sqlite3&quot;, # you can save the study results in a database if you'd like, this is needed if you want to try and use the optuna dashboard library to dispaly results
+)
+study.optimize(objective, n_trials=NUM_TRIALS)
+
+# Get the best hyperparameters and their corresponding values
+best_params = study.best_params
+best_loss = study.best_value
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Print out the best hyperparameters and the val_mse assocaited with the model with the best hyperparameters.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python">print(&quot;RESULTS&quot; + (&quot;=&quot; * 70))
+print(f&quot;Best hyperparameters: {best_params}&quot;)
+print(f&quot;Best loss: {best_loss}&quot;)
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>And that&rsquo;s it! Now you could take what you found to be the best hyperparameters and train a model with them for many more epochs. The <a href="https://optuna.readthedocs.io/en/stable/">Optuna Documentation</a> will be a helpful resource if you&rsquo;d like to add more to this notebook or the hyperparam sweep functions</p>
+</div>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -880,10 +1202,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "/yeastdnnexplorer/", "features": [], "search": "/yeastdnnexplorer/assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="/yeastdnnexplorer/assets/javascripts/bundle.3220b9d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.3220b9d7.min.js"></script>
       
     
   </body>

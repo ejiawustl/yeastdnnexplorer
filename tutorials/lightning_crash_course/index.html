@@ -12,19 +12,25 @@
         <meta name="author" content="ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>">
       
       
+        <link rel="canonical" href="https://brentlab.github.io/yeastdnnexplorer/tutorials/lightning_crash_course/">
       
       
+        <link rel="prev" href="../hyperparameter_sweep/">
       
-      <link rel="icon" href="/yeastdnnexplorer/assets/images/favicon.png">
+      
+        <link rel="next" href="../testing_model_metrics/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.18">
     
     
       
-        <title>yeastdnnexplorer</title>
+        <title>Lightning Crash Course - yeastdnnexplorer</title>
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
       
       
 
@@ -43,15 +49,15 @@
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/ansi-colours.css">
+      <link rel="stylesheet" href="../../css/ansi-colours.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/jupyter-cells.css">
+      <link rel="stylesheet" href="../../css/jupyter-cells.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/pandas-dataframe.css">
+      <link rel="stylesheet" href="../../css/pandas-dataframe.css">
     
-    <script>__md_scope=new URL("/yeastdnnexplorer/",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -69,6 +75,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#lightning-crash-course" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -81,7 +92,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -101,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Lightning Crash Course
             
           </span>
         </div>
@@ -188,7 +199,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -218,7 +229,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -235,17 +246,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -259,7 +272,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             Tutorials
@@ -273,7 +286,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/generate_in_silico_data/" class="md-nav__link">
+      <a href="../generate_in_silico_data/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -294,7 +307,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/hyperparameter_sweep/" class="md-nav__link">
+      <a href="../hyperparameter_sweep/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -312,10 +325,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/lightning_crash_course/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Lightning Crash Course
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -324,6 +355,57 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#lightning-crash-course" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lightning Crash Course
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lightning Crash Course">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkpointing-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkpointing &amp; Logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loading-in-and-using-a-checkpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading in and using a Checkpoint
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -336,7 +418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/testing_model_metrics/" class="md-nav__link">
+      <a href="../testing_model_metrics/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -357,7 +439,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/visualizing_and_testing_data_generation_methods/" class="md-nav__link">
+      <a href="../visualizing_and_testing_data_generation_methods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -455,7 +537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/synthetic_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/synthetic_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -476,7 +558,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/real_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/real_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -517,7 +599,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/ml_models/customizable_model/" class="md-nav__link ">
+            <a href="../../ml_models/customizable_model/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -548,7 +630,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_compute_nrmse/" class="md-nav__link">
+      <a href="../../ml_models/metrics_compute_nrmse/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -569,7 +651,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_smse/" class="md-nav__link">
+      <a href="../../ml_models/metrics_smse/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -590,7 +672,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/simple_model/" class="md-nav__link">
+      <a href="../../ml_models/simple_model/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -631,7 +713,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/probability_models/default_perturbation_effect_adjustment_function/" class="md-nav__link ">
+            <a href="../../probability_models/default_perturbation_effect_adjustment_function/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -662,7 +744,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/GenePopulation/" class="md-nav__link">
+      <a href="../../probability_models/GenePopulation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -683,7 +765,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_binding_effects/" class="md-nav__link">
+      <a href="../../probability_models/generate_binding_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -704,7 +786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_gene_population/" class="md-nav__link">
+      <a href="../../probability_models/generate_gene_population/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -725,7 +807,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_perturbation_effects/" class="md-nav__link">
+      <a href="../../probability_models/generate_perturbation_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -746,7 +828,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_pvalues/" class="md-nav__link">
+      <a href="../../probability_models/generate_pvalues/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -767,7 +849,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
+      <a href="../../probability_models/perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -788,7 +870,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
+      <a href="../../probability_models/perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -835,6 +917,47 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#lightning-crash-course" class="md-nav__link">
+    <span class="md-ellipsis">
+      Lightning Crash Course
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Lightning Crash Course">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkpointing-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkpointing &amp; Logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loading-in-and-using-a-checkpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loading in and using a Checkpoint
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -845,8 +968,265 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+  
+  
+
+
+  <h1>Lightning Crash Course</h1>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+<script>
+(function() {
+  function addWidgetsRenderer() {
+    var requireJsScript = document.createElement('script');
+    requireJsScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js';
+
+    var mimeElement = document.querySelector('script[type="application/vnd.jupyter.widget-view+json"]');
+    var jupyterWidgetsScript = document.createElement('script');
+    var widgetRendererSrc = 'https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js';
+    var widgetState;
+
+    // Fallback for older version:
+    try {
+      widgetState = mimeElement && JSON.parse(mimeElement.innerHTML);
+
+      if (widgetState && (widgetState.version_major < 2 || !widgetState.version_major)) {
+        widgetRendererSrc = 'jupyter-js-widgets@*/dist/embed.js';
+      }
+    } catch(e) {}
+
+    jupyterWidgetsScript.src = widgetRendererSrc;
+
+    document.body.appendChild(requireJsScript);
+    document.body.appendChild(jupyterWidgetsScript);
+  }
+
+  document.addEventListener('DOMContentLoaded', addWidgetsRenderer);
+}());
+</script>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="lightning-crash-course">Lightning Crash Course<a class="headerlink" href="#lightning-crash-course" title="Permanent link">&para;</a></h2>
+<p>This project uses the PyTorch Lightning Library to define and train the machine learning models. PyTorch Lightning is built on top of pytorch, and it abstracts away some of the setup and biolerplate for models (such as writing out training loops). In this notebook, we provide a brief introduction to how to use the models and dataModules we&rsquo;ve defined to train models.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># imports
+from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import CSVLogger, TensorBoardLogger
+
+from yeastdnnexplorer.data_loaders.synthetic_data_loader import SyntheticDataLoader
+from yeastdnnexplorer.data_loaders.real_data_loader import RealDataLoader
+from yeastdnnexplorer.ml_models.simple_model import SimpleModel
+from yeastdnnexplorer.ml_models.customizable_model import CustomizableModel
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In Pytorch Lightning, the data is kept completely separate from the models. This allows for you to easy train a model using different datasets or train different models on the same dataset. <code>DataModules</code> encapsulate all the logic of loading in a specific dataset and splitting into training, testing, and validation sets. In this project, we have two data loaders defined: <code>SyntheticDataLoader</code> for the in silico data (which takes in many parameters that allow you to specify how the data is generated) and <code>RealDataLoader</code> which contains all of the logic for loading in the real experiment data and putting it into a form that the models expect.</p>
+<p>Once you decide what model you want to train and what dataModule you want to use, you can bundle these with a <code>Trainer</code> object to train the model on the dataset.</p>
+<p>If you&rsquo;d like to learn more about the models and dataModules we&rsquo;ve defined, there is extensive documentation in each of the files that explains each method&rsquo;s purpose.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># define an instance of our simple linear baseline model
+model = SimpleModel(
+    input_dim=10,
+    output_dim=10,
+    lr=1e-2,
+)
+
+# define an instance of the synthetic data loader
+# see the constructor for the full list of params and their explanations
+data_module = SyntheticDataLoader(
+    batch_size=32,
+    num_genes=3000,
+    signal=[0.5] * 5,
+    n_sample=[1, 1, 2, 2, 4],
+    val_size=0.1,
+    test_size=0.1,
+    signal_mean=3.0,
+)
+
+# define a trainer instance
+trainer = Trainer(
+    max_epochs=10,
+    deterministic=True,
+    accelerator=&quot;cpu&quot;, # change to &quot;gpu&quot; if you have access to one
+)
+
+# train the model
+trainer.fit(model, data_module)
+
+# test the model (recall that data_module specifies the train / test split, we don't need to do it explicitly here)
+test_results = trainer.test(model, data_module)
+print(test_results)
+
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>It&rsquo;s very easy to train the same model on a different dataset, for example if we want to use real world data we can just swap to the data module that we&rsquo;ve defined for the real world data.</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># we need to redefine a new instance with the same params unless we want it to pick up where it left off
+new_model = SimpleModel(
+    input_dim=30,  # note that the input and output dims are equal to the num TFs in the dataset
+    output_dim=30,
+    lr=1e-2,
+)
+
+real_data_module = RealDataLoader(
+    batch_size=32,
+    val_size=0.1,
+    test_size=0.1,
+    data_dir_path=&quot;../../data/init_analysis_data_20240409/&quot;, # note that this is relative to where real_data_loader.py is
+    perturbation_dataset_title=&quot;hu_reimann_tfko&quot;,
+)
+
+# we also have to define a new trainer instance, not really sure why but it seems to be necessary
+trainer = Trainer(
+    max_epochs=10,
+    deterministic=True,
+    accelerator=&quot;cpu&quot;, # change to &quot;gpu&quot; if you have access to one
+)
+
+trainer.fit(new_model, real_data_module)
+test_results = trainer.test(new_model, real_data_module)
+print(test_results)
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If we wanted to do the same thing with our more complex and customizable <code>CustomizableModel</code> (which allows you to pass in many params like the number of hidden layers, dropout rate, choice of optimizer, etc) the code would look identical to above except that we would be initializing a <code>CustomizableModel</code> instead of a <code>SimpleModel</code>. See the documentation in <code>customizable_model.py</code> for more</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="checkpointing-logging">Checkpointing &amp; Logging<a class="headerlink" href="#checkpointing-logging" title="Permanent link">&para;</a></h3>
+<p>PyTorch lightning gives us the power to define checkpoints and loggers that will be used during training. Checkpoints will save checkpoints of your model during training. In the following code, we define a checkpoint that saves the model&rsquo;s state when it produced the lowest validation mean squared error on the validation set during training. We also define another checkpoint to periodically save a checkpoint of the model after every 2 training epochs. These checkpoints are powerful because they can be reloaded later. You can continue training a model after loading its checkpoint or you can test the model checkpoint on new data.</p>
+<p>Loggers are responsible for saving metrics about the model as it is training for us to look at later. We define several loggers to track this data. See the comments above the Tensorboard logger to see how to use Tensorboard to visualize the metrics as the model trains</p>
+<p>To use checkpoints and loggers, we have to pass them into the Trainer object that we use to train the model with a dataModule. </p>
+<p>There are many more types of checkpoints and loggers you can create and use, PyTorch Lightning&rsquo;s documentation is very helpful here</p>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># this will be used to save the model checkpoint that performs the best on the validation set
+best_model_checkpoint = ModelCheckpoint(
+    monitor=&quot;val_mse&quot;, # we can depend on any metric we want
+    mode=&quot;min&quot;,
+    filename=&quot;best-model-{epoch:02d}-{val_loss:.2f}&quot;,
+    save_top_k=1, # we can save more than just the top model if we want
+)
+
+# Callback to save checkpoints every 2 epochs, regardless of model performance
+periodic_checkpoint = ModelCheckpoint(
+    filename=&quot;periodic-{epoch:02d}&quot;,
+    every_n_epochs=2,
+    save_top_k=-1,  # Setting -1 saves all checkpoints  
+)
+
+# csv logger is a very basic logger that will create a csv file with our metrics as we train
+csv_logger = CSVLogger(&quot;logs/csv_logs&quot;)  # we define the directory we want the logs to be saved in
+
+# tensorboard logger is a more advanced logger that will create a directory with a bunch of files that can be visualized with tensorboard
+# tensorboard is a library that can be ran via the command line, and will create a local server that can be accessed via a web browser
+# that displays the training metrics in a more interactive way (on a dashboard)
+# you can run tensorboard by running the command `tensorboard --logdir=path/to/log/dir` in the terminal
+tb_logger = TensorBoardLogger(&quot;logs/tensorboard_logs&quot;, name=&quot;test-run-2&quot;)
+
+# If we wanted to use these checkpoints and loggers, we would pass them to the trainer like so:
+trainer_with_checkpoints_and_loggers = Trainer(
+    max_epochs=10,
+    deterministic=True,
+    accelerator=&quot;cpu&quot;,
+    callbacks=[best_model_checkpoint, periodic_checkpoint],
+    logger=[csv_logger, tb_logger],
+)
+</code></pre>
+
+
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="loading-in-and-using-a-checkpoint">Loading in and using a Checkpoint<a class="headerlink" href="#loading-in-and-using-a-checkpoint" title="Permanent link">&para;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+
+<pre><code class="language-python"># Load a model from a checkpoint
+# We can load a model from a checkpoint like so:
+path_to_checkpoint = &quot;example/path/not/real.ckpt&quot;
+
+# note that we need to use the same model class that was used to save the checkpoint
+model = SimpleModel.load_from_checkpoint(path_to_checkpoint)
+
+# we can load the model and continue training from where it left off
+trainer.fit(model, data_module)
+
+# we could also load the model and test it
+test_results = trainer.test(model, data_module)
+
+# we could also load the model and make predictions
+predictions = model(data_module.test_dataloader())
+</code></pre>
+
+
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -880,10 +1260,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "/yeastdnnexplorer/", "features": [], "search": "/yeastdnnexplorer/assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="/yeastdnnexplorer/assets/javascripts/bundle.3220b9d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.3220b9d7.min.js"></script>
       
     
   </body>

@@ -12,19 +12,25 @@
         <meta name="author" content="ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>">
       
       
+        <link rel="canonical" href="https://brentlab.github.io/yeastdnnexplorer/ml_models/metrics_compute_nrmse/">
       
       
+        <link rel="prev" href="../customizable_model/">
       
-      <link rel="icon" href="/yeastdnnexplorer/assets/images/favicon.png">
+      
+        <link rel="next" href="../metrics_smse/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.18">
     
     
       
-        <title>yeastdnnexplorer</title>
+        <title>Metrics compute nrmse - yeastdnnexplorer</title>
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
       
       
 
@@ -43,15 +49,15 @@
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/ansi-colours.css">
+      <link rel="stylesheet" href="../../css/ansi-colours.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/jupyter-cells.css">
+      <link rel="stylesheet" href="../../css/jupyter-cells.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/pandas-dataframe.css">
+      <link rel="stylesheet" href="../../css/pandas-dataframe.css">
     
-    <script>__md_scope=new URL("/yeastdnnexplorer/",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -69,6 +75,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#yeastdnnexplorer.ml_models.metrics.compute_nrmse" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -81,7 +92,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -101,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Metrics compute nrmse
             
           </span>
         </div>
@@ -188,7 +199,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -218,7 +229,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -273,7 +284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/generate_in_silico_data/" class="md-nav__link">
+      <a href="../../tutorials/generate_in_silico_data/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -294,7 +305,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/hyperparameter_sweep/" class="md-nav__link">
+      <a href="../../tutorials/hyperparameter_sweep/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -315,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/lightning_crash_course/" class="md-nav__link">
+      <a href="../../tutorials/lightning_crash_course/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -336,7 +347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/testing_model_metrics/" class="md-nav__link">
+      <a href="../../tutorials/testing_model_metrics/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -357,7 +368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/visualizing_and_testing_data_generation_methods/" class="md-nav__link">
+      <a href="../../tutorials/visualizing_and_testing_data_generation_methods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -382,17 +393,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -406,7 +419,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             API
@@ -455,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/synthetic_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/synthetic_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -476,7 +489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/real_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/real_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -502,22 +515,24 @@
                 
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" checked>
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/ml_models/customizable_model/" class="md-nav__link ">
+            <a href="../customizable_model/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -534,7 +549,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             Models
@@ -545,10 +560,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_compute_nrmse/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Metrics compute nrmse
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -557,6 +590,33 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#yeastdnnexplorer.ml_models.metrics.compute_nrmse" class="md-nav__link">
+    <span class="md-ellipsis">
+      compute_nrmse
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -569,7 +629,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_smse/" class="md-nav__link">
+      <a href="../metrics_smse/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -590,7 +650,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/simple_model/" class="md-nav__link">
+      <a href="../simple_model/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -631,7 +691,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/probability_models/default_perturbation_effect_adjustment_function/" class="md-nav__link ">
+            <a href="../../probability_models/default_perturbation_effect_adjustment_function/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -662,7 +722,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/GenePopulation/" class="md-nav__link">
+      <a href="../../probability_models/GenePopulation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -683,7 +743,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_binding_effects/" class="md-nav__link">
+      <a href="../../probability_models/generate_binding_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -704,7 +764,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_gene_population/" class="md-nav__link">
+      <a href="../../probability_models/generate_gene_population/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -725,7 +785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_perturbation_effects/" class="md-nav__link">
+      <a href="../../probability_models/generate_perturbation_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -746,7 +806,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_pvalues/" class="md-nav__link">
+      <a href="../../probability_models/generate_pvalues/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -767,7 +827,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
+      <a href="../../probability_models/perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -788,7 +848,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
+      <a href="../../probability_models/perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -835,6 +895,23 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#yeastdnnexplorer.ml_models.metrics.compute_nrmse" class="md-nav__link">
+    <span class="md-ellipsis">
+      compute_nrmse
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -845,8 +922,153 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+  
+  
+
+
+  <h1>Metrics compute nrmse</h1>
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<a id="yeastdnnexplorer.ml_models.metrics.compute_nrmse"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Compute the Normalized Root Mean Squared Error. This can be used to better compare
+models trained on different datasets with differnet scales, although it is not
+perfectly scale invariant.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>y_pred</code></td>
+          <td>
+                <code>torch.Tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The predicted y values</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>y_true</code></td>
+          <td>
+                <code>torch.Tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The true y values</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>torch.Tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The normalized root mean squared error</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>yeastdnnexplorer/ml_models/metrics.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">compute_nrmse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the Normalized Root Mean Squared Error. This can be used to better compare</span>
+<span class="sd">    models trained on different datasets with differnet scales, although it is not</span>
+<span class="sd">    perfectly scale invariant.</span>
+
+<span class="sd">    :param y_pred: The predicted y values</span>
+<span class="sd">    :type y_pred: torch.Tensor</span>
+<span class="sd">    :param y_true: The true y values</span>
+<span class="sd">    :type y_true: torch.Tensor</span>
+<span class="sd">    :return: The normalized root mean squared error</span>
+<span class="sd">    :rtype: torch.Tensor</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">))</span>
+
+    <span class="c1"># normalize with the range of true y values</span>
+    <span class="n">y_range</span> <span class="o">=</span> <span class="n">y_true</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">y_true</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">nrmse</span> <span class="o">=</span> <span class="n">rmse</span> <span class="o">/</span> <span class="n">y_range</span>
+    <span class="k">return</span> <span class="n">nrmse</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -880,10 +1102,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "/yeastdnnexplorer/", "features": [], "search": "/yeastdnnexplorer/assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="/yeastdnnexplorer/assets/javascripts/bundle.3220b9d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.3220b9d7.min.js"></script>
       
     
   </body>

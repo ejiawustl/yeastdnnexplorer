@@ -12,19 +12,25 @@
         <meta name="author" content="ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>">
       
       
+        <link rel="canonical" href="https://brentlab.github.io/yeastdnnexplorer/probability_models/default_perturbation_effect_adjustment_function/">
       
       
+        <link rel="prev" href="../../ml_models/simple_model/">
       
-      <link rel="icon" href="/yeastdnnexplorer/assets/images/favicon.png">
+      
+        <link rel="next" href="../GenePopulation/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.18">
     
     
       
-        <title>yeastdnnexplorer</title>
+        <title>Probability Models - yeastdnnexplorer</title>
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/stylesheets/main.66ac8b77.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.66ac8b77.min.css">
       
       
 
@@ -43,15 +49,15 @@
       
     
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/ansi-colours.css">
+      <link rel="stylesheet" href="../../css/ansi-colours.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/jupyter-cells.css">
+      <link rel="stylesheet" href="../../css/jupyter-cells.css">
     
-      <link rel="stylesheet" href="/yeastdnnexplorer/css/pandas-dataframe.css">
+      <link rel="stylesheet" href="../../css/pandas-dataframe.css">
     
-    <script>__md_scope=new URL("/yeastdnnexplorer/",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -69,6 +75,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#yeastdnnexplorer.probability_models.generate_data.default_perturbation_effect_adjustment_function" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -81,7 +92,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-header__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -101,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              
+              Probability Models
             
           </span>
         </div>
@@ -188,7 +199,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="/yeastdnnexplorer/." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
+    <a href="../.." title="yeastdnnexplorer" class="md-nav__button md-logo" aria-label="yeastdnnexplorer" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -218,7 +229,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -273,7 +284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/generate_in_silico_data/" class="md-nav__link">
+      <a href="../../tutorials/generate_in_silico_data/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -294,7 +305,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/hyperparameter_sweep/" class="md-nav__link">
+      <a href="../../tutorials/hyperparameter_sweep/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -315,7 +326,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/lightning_crash_course/" class="md-nav__link">
+      <a href="../../tutorials/lightning_crash_course/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -336,7 +347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/testing_model_metrics/" class="md-nav__link">
+      <a href="../../tutorials/testing_model_metrics/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -357,7 +368,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/tutorials/visualizing_and_testing_data_generation_methods/" class="md-nav__link">
+      <a href="../../tutorials/visualizing_and_testing_data_generation_methods/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -382,17 +393,19 @@
       
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
@@ -406,7 +419,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             API
@@ -455,7 +468,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/synthetic_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/synthetic_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -476,7 +489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/data_loaders/real_data_loader/" class="md-nav__link">
+      <a href="../../data_loaders/real_data_loader/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -517,7 +530,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/ml_models/customizable_model/" class="md-nav__link ">
+            <a href="../../ml_models/customizable_model/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -548,7 +561,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_compute_nrmse/" class="md-nav__link">
+      <a href="../../ml_models/metrics_compute_nrmse/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -569,7 +582,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/metrics_smse/" class="md-nav__link">
+      <a href="../../ml_models/metrics_smse/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -590,7 +603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/ml_models/simple_model/" class="md-nav__link">
+      <a href="../../ml_models/simple_model/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -616,22 +629,24 @@
                 
   
   
+    
   
   
+  
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" checked>
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="/yeastdnnexplorer/probability_models/default_perturbation_effect_adjustment_function/" class="md-nav__link ">
+            <a href="./" class="md-nav__link md-nav__link--active">
               
   
   <span class="md-ellipsis">
@@ -642,13 +657,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+              <label class="md-nav__link md-nav__link--active" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3_3">
             <span class="md-nav__icon md-icon"></span>
             Probability Models
@@ -662,7 +677,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/GenePopulation/" class="md-nav__link">
+      <a href="../GenePopulation/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -683,7 +698,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_binding_effects/" class="md-nav__link">
+      <a href="../generate_binding_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -704,7 +719,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_gene_population/" class="md-nav__link">
+      <a href="../generate_gene_population/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -725,7 +740,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_perturbation_effects/" class="md-nav__link">
+      <a href="../generate_perturbation_effects/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -746,7 +761,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/generate_pvalues/" class="md-nav__link">
+      <a href="../generate_pvalues/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -767,7 +782,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
+      <a href="../perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -788,7 +803,7 @@
   
   
     <li class="md-nav__item">
-      <a href="/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
+      <a href="../perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -835,6 +850,23 @@
   
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#yeastdnnexplorer.probability_models.generate_data.default_perturbation_effect_adjustment_function" class="md-nav__link">
+    <span class="md-ellipsis">
+      default_perturbation_effect_adjustment_function
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -845,8 +877,268 @@
             <div class="md-content" data-md-component="content">
               <article class="md-content__inner md-typeset">
                 
-  <h1>404 - Not found</h1>
+                  
 
+  
+  
+
+
+  <h1>Probability Models</h1>
+
+<div class="doc doc-object doc-function">
+
+
+
+
+<a id="yeastdnnexplorer.probability_models.generate_data.default_perturbation_effect_adjustment_function"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Default function to adjust the mean of the perturbation effect based on the
+enrichment score.</p>
+<p>All functions that are passed to generate_perturbation_effects() in the argument
+adjustment_function must have the same signature as this function.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>binding_enrichment_data</code></td>
+          <td>
+                <code><span title="torch.Tensor">Tensor</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A tensor of enrichment scores for each gene with dimensions [n_genes, n_tfs, 3] where the entries in the third dimension are a matrix with columns [label, enrichment, pvalue].</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>signal_mean</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The mean for signal genes.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>noise_mean</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The mean for noise genes.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_adjustment</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The maximum adjustment to the base mean based on enrichment.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>tf_relationships</code></td>
+          <td>
+                <code>dict[int, list[int]], optional</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Unused in this function. It is only here to match the signature of the other adjustment functions.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>torch.Tensor</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Adjusted mean as a tensor.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>yeastdnnexplorer/probability_models/generate_data.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">default_perturbation_effect_adjustment_function</span><span class="p">(</span>
+    <span class="n">binding_enrichment_data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">signal_mean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">noise_mean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">max_adjustment</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Default function to adjust the mean of the perturbation effect based on the</span>
+<span class="sd">    enrichment score.</span>
+
+<span class="sd">    All functions that are passed to generate_perturbation_effects() in the argument</span>
+<span class="sd">    adjustment_function must have the same signature as this function.</span>
+
+<span class="sd">    :param binding_enrichment_data: A tensor of enrichment scores for each gene with</span>
+<span class="sd">        dimensions [n_genes, n_tfs, 3] where the entries in the third dimension are a</span>
+<span class="sd">        matrix with columns [label, enrichment, pvalue].</span>
+<span class="sd">    :type binding_enrichment_data: torch.Tensor</span>
+<span class="sd">    :param signal_mean: The mean for signal genes.</span>
+<span class="sd">    :type signal_mean: float</span>
+<span class="sd">    :param noise_mean: The mean for noise genes.</span>
+<span class="sd">    :type noise_mean: float</span>
+<span class="sd">    :param max_adjustment: The maximum adjustment to the base mean based on enrichment.</span>
+<span class="sd">    :type max_adjustment: float</span>
+<span class="sd">    :param tf_relationships: Unused in this function. It is only here to match the</span>
+<span class="sd">        signature of the other adjustment functions.</span>
+<span class="sd">    :type tf_relationships: dict[int, list[int]], optional</span>
+<span class="sd">    :return: Adjusted mean as a tensor.</span>
+<span class="sd">    :rtype: torch.Tensor</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Extract signal/noise labels and enrichment scores</span>
+    <span class="n">signal_labels</span> <span class="o">=</span> <span class="n">binding_enrichment_data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">enrichment_scores</span> <span class="o">=</span> <span class="n">binding_enrichment_data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">adjusted_mean_matrix</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">signal_labels</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">enrichment_scores</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">enrichment_scores</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">gene_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">signal_labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">tf_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">signal_labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">gene_idx</span><span class="p">,</span> <span class="n">tf_index</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># draw a random value between 0 and 1 to use to control</span>
+                <span class="c1"># magnitude of adjustment</span>
+                <span class="n">adjustment_multiplier</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># randomly adjust the gene by some portion of the max adjustment</span>
+                <span class="n">adjusted_mean_matrix</span><span class="p">[</span><span class="n">gene_idx</span><span class="p">,</span> <span class="n">tf_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">signal_mean</span> <span class="o">+</span> <span class="p">(</span>
+                    <span class="n">adjustment_multiplier</span> <span class="o">*</span> <span class="n">max_adjustment</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># related tfs are not all bound, so set the enrichment</span>
+                <span class="c1"># score to noise mean</span>
+                <span class="n">adjusted_mean_matrix</span><span class="p">[</span><span class="n">gene_idx</span><span class="p">,</span> <span class="n">tf_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_mean</span>
+
+    <span class="k">return</span> <span class="n">adjusted_mean_matrix</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
               </article>
             </div>
           
@@ -880,10 +1172,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "/yeastdnnexplorer/", "features": [], "search": "/yeastdnnexplorer/assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="/yeastdnnexplorer/assets/javascripts/bundle.3220b9d7.min.js"></script>
+      <script src="../../assets/javascripts/bundle.3220b9d7.min.js"></script>
       
     
   </body>

@@ -12,13 +12,11 @@
         <meta name="author" content="ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>">
       
       
-        <link rel="canonical" href="https://brentlab.github.io/yeastdnnexplorer/probability_models/generate_gene_population/">
+        <link rel="canonical" href="https://brentlab.github.io/yeastdnnexplorer/probability_models/perturbation_effect_adjustment_function_with_tf_relationships/">
       
       
-        <link rel="prev" href="../generate_binding_effects/">
+        <link rel="prev" href="../perturbation_effect_adjustment_function_with_tf_relationships_boolean_logic/">
       
-      
-        <link rel="next" href="../generate_perturbation_effects/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -26,7 +24,7 @@
     
     
       
-        <title>Generate Gene Population - yeastdnnexplorer</title>
+        <title>Perturbation effect adjustment function with tf relationships - yeastdnnexplorer</title>
       
     
     
@@ -76,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#yeastdnnexplorer.probability_models.generate_data.generate_gene_population" class="md-skip">
+        <a href="#yeastdnnexplorer.probability_models.generate_data.perturbation_effect_adjustment_function_with_tf_relationships" class="md-skip">
           Skip to content
         </a>
       
@@ -112,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Generate Gene Population
+              Perturbation effect adjustment function with tf relationships
             
           </span>
         </div>
@@ -716,28 +714,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  <span class="md-ellipsis">
-    Generate Gene Population
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../generate_gene_population/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -746,33 +726,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#yeastdnnexplorer.probability_models.generate_data.generate_gene_population" class="md-nav__link">
-    <span class="md-ellipsis">
-      generate_gene_population
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -845,10 +798,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../perturbation_effect_adjustment_function_with_tf_relationships/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Perturbation effect adjustment function with tf relationships
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -857,6 +828,33 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#yeastdnnexplorer.probability_models.generate_data.perturbation_effect_adjustment_function_with_tf_relationships" class="md-nav__link">
+    <span class="md-ellipsis">
+      perturbation_effect_adjustment_function_with_tf_relationships
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -902,9 +900,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#yeastdnnexplorer.probability_models.generate_data.generate_gene_population" class="md-nav__link">
+  <a href="#yeastdnnexplorer.probability_models.generate_data.perturbation_effect_adjustment_function_with_tf_relationships" class="md-nav__link">
     <span class="md-ellipsis">
-      generate_gene_population
+      perturbation_effect_adjustment_function_with_tf_relationships
     </span>
   </a>
   
@@ -928,21 +926,21 @@
   
 
 
-  <h1>Generate Gene Population</h1>
+  <h1>Perturbation effect adjustment function with tf relationships</h1>
 
 <div class="doc doc-object doc-function">
 
 
 
 
-<a id="yeastdnnexplorer.probability_models.generate_data.generate_gene_population"></a>
+<a id="yeastdnnexplorer.probability_models.generate_data.perturbation_effect_adjustment_function_with_tf_relationships"></a>
   <div class="doc doc-contents first">
   
-      <p>Generate two sets of genes, one of which will be considered genes which show a
-signal, and the other which does not. The return is a one dimensional boolean tensor
-where a value of &lsquo;0&rsquo; means that the gene at that index is part of the noise group
-and a &lsquo;1&rsquo; means the gene at that index is part of the signal group. The length of
-the tensor is the number of genes in this simulated organism.</p>
+      <p>Adjust the mean of the perturbation effect based on the enrichment score and the
+provided relationships between TFs. For each gene, the mean of the TF-gene pair&rsquo;s
+perturbation effect will be adjusted if the TF is bound to the gene and all related
+TFs are also bound to the gene. The adjustment will be a random value not exceeding
+the maximum adjustment.</p>
 
 
 
@@ -958,31 +956,73 @@ the tensor is the number of genes in this simulated organism.</p>
     </thead>
     <tbody>
         <tr>
-          <td><code>total</code></td>
+          <td><code>binding_enrichment_data</code></td>
           <td>
-                <code>int</code>
+                <code><span title="torch.Tensor">Tensor</span></code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>The total number of genes. defaults to 1000</p>
+              <p>A tensor of enrichment scores for each gene with dimensions [n_genes, n_tfs, 3] where the entries in the third dimension are a matrix with columns [label, enrichment, pvalue].</p>
             </div>
           </td>
           <td>
-                <code>1000</code>
+              <em>required</em>
           </td>
         </tr>
         <tr>
-          <td><code>signal_group</code></td>
+          <td><code>signal_mean</code></td>
           <td>
                 <code>float</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>The proportion of genes in the signal group. defaults to 0.3</p>
+              <p>The mean for signal genes.</p>
             </div>
           </td>
           <td>
-                <code>0.3</code>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>noise_mean</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The mean for noise genes.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>max_adjustment</code></td>
+          <td>
+                <code>float</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The maximum adjustment to the base mean based on enrichment.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>tf_relationships</code></td>
+          <td>
+                <code>dict[int, list[int]]</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>A dictionary where the keys are the indices of the TFs and the values are lists of indices of other TFs that are related to the key TF.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
           </td>
         </tr>
     </tbody>
@@ -1001,11 +1041,11 @@ the tensor is the number of genes in this simulated organism.</p>
     <tbody>
         <tr>
           <td>
-                <code>GenePopulation</code>
+                <code>torch.Tensor</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>A one dimensional tensor of boolean values where the set of indices with a value of &lsquo;1&rsquo; are the signal group and the set of indices with a value of &lsquo;0&rsquo; are the noise group.</p>
+              <p>Adjusted mean as a tensor.</p>
             </div>
           </td>
         </tr>
@@ -1025,11 +1065,11 @@ the tensor is the number of genes in this simulated organism.</p>
     <tbody>
         <tr>
           <td>
-                <code>TypeError</code>
+                <code>ValueError</code>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>if total is not an integer</p>
+              <p>If tf_relationships is not a dictionary between ints and lists of ints</p>
             </div>
           </td>
         </tr>
@@ -1039,7 +1079,17 @@ the tensor is the number of genes in this simulated organism.</p>
           </td>
           <td>
             <div class="doc-md-description">
-              <p>If signal_group is not between 0 and 1</p>
+              <p>If the tf_relationships dict does not have the same number of TFs as the binding_data tensor passed into the function</p>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+                <code>ValueError</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If the tf_relationships dict has any TFs in the values that are not also in the keys or any key or value TFs that are out of bounds for the binding_data tensor</p>
             </div>
           </td>
         </tr>
@@ -1048,81 +1098,189 @@ the tensor is the number of genes in this simulated organism.</p>
 
           <details class="quote">
             <summary>Source code in <code>yeastdnnexplorer/probability_models/generate_data.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span>
-<span class="normal">77</span>
-<span class="normal">78</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">generate_gene_population</span><span class="p">(</span>
-    <span class="n">total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">signal_group</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GenePopulation</span><span class="p">:</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span>
+<span class="normal">402</span>
+<span class="normal">403</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
+<span class="normal">407</span>
+<span class="normal">408</span>
+<span class="normal">409</span>
+<span class="normal">410</span>
+<span class="normal">411</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span>
+<span class="normal">424</span>
+<span class="normal">425</span>
+<span class="normal">426</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span>
+<span class="normal">457</span>
+<span class="normal">458</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span>
+<span class="normal">464</span>
+<span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">perturbation_effect_adjustment_function_with_tf_relationships</span><span class="p">(</span>
+    <span class="n">binding_enrichment_data</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">signal_mean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">noise_mean</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">max_adjustment</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">tf_relationships</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Generate two sets of genes, one of which will be considered genes which show a</span>
-<span class="sd">    signal, and the other which does not. The return is a one dimensional boolean tensor</span>
-<span class="sd">    where a value of &#39;0&#39; means that the gene at that index is part of the noise group</span>
-<span class="sd">    and a &#39;1&#39; means the gene at that index is part of the signal group. The length of</span>
-<span class="sd">    the tensor is the number of genes in this simulated organism.</span>
+<span class="sd">    Adjust the mean of the perturbation effect based on the enrichment score and the</span>
+<span class="sd">    provided relationships between TFs. For each gene, the mean of the TF-gene pair&#39;s</span>
+<span class="sd">    perturbation effect will be adjusted if the TF is bound to the gene and all related</span>
+<span class="sd">    TFs are also bound to the gene. The adjustment will be a random value not exceeding</span>
+<span class="sd">    the maximum adjustment.</span>
 
-<span class="sd">    :param total: The total number of genes. defaults to 1000</span>
-<span class="sd">    :type total: int, optional</span>
-<span class="sd">    :param signal_group: The proportion of genes in the signal group. defaults to 0.3</span>
-<span class="sd">    :type signal_group: float, optional</span>
-<span class="sd">    :return: A one dimensional tensor of boolean values where the set of indices with a</span>
-<span class="sd">        value of &#39;1&#39; are the signal group and the set of indices with a value of &#39;0&#39; are</span>
-<span class="sd">        the noise group.</span>
-<span class="sd">    :rtype: GenePopulation</span>
-<span class="sd">    :raises TypeError: if total is not an integer</span>
-<span class="sd">    :raises ValueError: If signal_group is not between 0 and 1</span>
+<span class="sd">    :param binding_enrichment_data: A tensor of enrichment scores for each gene with</span>
+<span class="sd">        dimensions [n_genes, n_tfs, 3] where the entries in the third dimension are a</span>
+<span class="sd">        matrix with columns [label, enrichment, pvalue].</span>
+<span class="sd">    :type binding_enrichment_data: torch.Tensor</span>
+<span class="sd">    :param signal_mean: The mean for signal genes.</span>
+<span class="sd">    :type signal_mean: float</span>
+<span class="sd">    :param noise_mean: The mean for noise genes.</span>
+<span class="sd">    :type noise_mean: float</span>
+<span class="sd">    :param max_adjustment: The maximum adjustment to the base mean based on enrichment.</span>
+<span class="sd">    :type max_adjustment: float</span>
+<span class="sd">    :param tf_relationships: A dictionary where the keys are the indices of the TFs and</span>
+<span class="sd">        the values are lists of indices of other TFs that are related to the key TF.</span>
+<span class="sd">    :type tf_relationships: dict[int, list[int]]</span>
+<span class="sd">    :return: Adjusted mean as a tensor.</span>
+<span class="sd">    :rtype: torch.Tensor</span>
+<span class="sd">    :raises ValueError: If tf_relationships is not a dictionary between ints and lists</span>
+<span class="sd">        of ints</span>
+<span class="sd">    :raises ValueError: If the tf_relationships dict does not have the same number of</span>
+<span class="sd">        TFs as the binding_data tensor passed into the function</span>
+<span class="sd">    :raises ValueError: If the tf_relationships dict has any TFs in the values that are</span>
+<span class="sd">        not also in the keys or any key or value TFs that are out of bounds for the</span>
+<span class="sd">        binding_data tensor</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;total must be an integer&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">signal_group</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;signal_group must be between 0 and 1&quot;</span><span class="p">)</span>
-
-    <span class="n">signal_group_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span> <span class="o">*</span> <span class="n">signal_group</span><span class="p">)</span>
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Generating </span><span class="si">%s</span><span class="s2"> genes with signal&quot;</span><span class="p">,</span> <span class="n">signal_group_size</span><span class="p">)</span>
-
-    <span class="n">labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
-        <span class="p">(</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">signal_group_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
-            <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">total</span> <span class="o">-</span> <span class="n">signal_group_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tf_relationships</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">tf_relationships</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">tf_relationships</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">tf_relationships</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">v</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;tf_relationships must be a dictionary between ints and lists of ints&quot;</span>
         <span class="p">)</span>
-    <span class="p">)[</span><span class="n">torch</span><span class="o">.</span><span class="n">randperm</span><span class="p">(</span><span class="n">total</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">binding_enrichment_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">tf_relationships</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">binding_enrichment_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">tf_relationships</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">v</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;all keys and values in tf_relationships must be within the </span><span class="se">\</span>
+<span class="s2">                  bounds of the binding_data tensor&#39;s number of TFs&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">tf_relationships</span><span class="p">)</span> <span class="o">==</span> <span class="n">binding_enrichment_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;tf_relationships must have the same number of TFs as the </span><span class="se">\</span>
+<span class="s2">                binding_data tensor passed into the function&quot;</span>
+        <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">GenePopulation</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="c1"># Extract signal/noise labels and enrichment scores</span>
+    <span class="n">signal_labels</span> <span class="o">=</span> <span class="n">binding_enrichment_data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># shape: (num_genes, num_tfs)</span>
+    <span class="n">enrichment_scores</span> <span class="o">=</span> <span class="n">binding_enrichment_data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># shape: (num_genes, num_tfs)</span>
+
+    <span class="c1"># we set all unbound scores to 0, then we will go through and also</span>
+    <span class="c1"># set any bound scores to noise_mean if the related tfs are not also bound</span>
+    <span class="n">adjusted_mean_matrix</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">signal_labels</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">enrichment_scores</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">enrichment_scores</span><span class="p">)</span>
+    <span class="p">)</span>  <span class="c1"># shape: (num_genes, num_tfs)</span>
+
+    <span class="k">for</span> <span class="n">gene_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">signal_labels</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">tf_index</span><span class="p">,</span> <span class="n">related_tfs</span> <span class="ow">in</span> <span class="n">tf_relationships</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">signal_labels</span><span class="p">[</span><span class="n">gene_idx</span><span class="p">,</span> <span class="n">tf_index</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">torch</span><span class="o">.</span><span class="n">all</span><span class="p">(</span>
+                <span class="n">signal_labels</span><span class="p">[</span><span class="n">gene_idx</span><span class="p">,</span> <span class="n">related_tfs</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+            <span class="p">):</span>
+                <span class="c1"># draw a random value between 0 and 1 to use to</span>
+                <span class="c1"># control magnitude of adjustment</span>
+                <span class="n">adjustment_multiplier</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+                <span class="c1"># randomly adjust the gene by some portion of the max adjustment</span>
+                <span class="n">adjusted_mean_matrix</span><span class="p">[</span><span class="n">gene_idx</span><span class="p">,</span> <span class="n">tf_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">signal_mean</span> <span class="o">+</span> <span class="p">(</span>
+                    <span class="n">adjustment_multiplier</span> <span class="o">*</span> <span class="n">max_adjustment</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># related tfs are not all bound, set the enrichment score to noise mean</span>
+                <span class="n">adjusted_mean_matrix</span><span class="p">[</span><span class="n">gene_idx</span><span class="p">,</span> <span class="n">tf_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_mean</span>
+
+    <span class="k">return</span> <span class="n">adjusted_mean_matrix</span>  <span class="c1"># shape (num_genes, num_tfs)</span>
 </code></pre></div></td></tr></table></div>
           </details>
   </div>
