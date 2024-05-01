@@ -1,25 +1,26 @@
 # yeastdnnexplorer
 
-[![gh-pages](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml/badge.svg)](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![style](https://img.shields.io/badge/%20style-sphinx-0a507a.svg)](https://www.sphinx-doc.org/en/master/usage/index.html)
 [![Pytest](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/BrentLab/yeastdnnexplorer/graph/badge.svg?token=D2AB7IUY7F)](https://codecov.io/gh/BrentLab/yeastdnnexplorer)
 [![gh-pages](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml/badge.svg)](https://github.com/BrentLab/yeastdnnexplorer/actions/workflows/docs.yml)
 
 ## Documentation
 
-See [here]() for more complete documentation
+See [here](https://brentlab.github.io/yeastdnnexplorer/) for more complete documentation
 
 ## Installation
 
-(no user installation instructions yet)
+This repo has not yet been added to PyPI. See the developer installation below.
 
 ### Development
 
 1. git clone the repo
 1. `cd` into the local version of the repo
-1. choose one (or more) of the following
+1. choose one (or more) of the following (only poetry currently supported)
 
-#### vscode
+<!-- #### vscode
 
 I strongly recommend using vscode in the `devcontainer` environment. This will
 ensure that you have all the necessary dependencies installed and configured,
@@ -32,7 +33,7 @@ but not the tookit, see the section on installing with docker:
 
 If you don't want GPU access in the devcontainer, you can also change the
 value of `dockerComposeFile` from `gpu.yml` to `cpu.yml` in the
-[devcontainer.json](.devcontainer/devcontainer.json).
+[devcontainer.json](.devcontainer/devcontainer.json). -->
 
 #### poetry
 
@@ -50,7 +51,7 @@ After cloning and `cd`ing into the repo, you can install the dependencies with:
 poetry install
 ```
 
-#### docker compose
+<!-- #### docker compose
 
 You can create an environment using docker compose. There are two compose
 configuration files:
@@ -75,4 +76,22 @@ docker-compose -f <gpu/cpu>.yml run --rm app bash
 you don't need to clone the repo to your local for this, but you will
 need to fork the repo into your local github account. Make sure you change
 the `dockerComposeFile` in the [devcontainer.json](.devcontainer/devcontainer.json)
-to `cpu.yml` and then launch a codespace.
+to `cpu.yml` and then launch a codespace. -->
+
+#### mkdocs
+
+The documentation is build with mkdocs:
+
+##### Commands
+
+* `mkdocs new [dir-name]` - Create a new project.
+* `mkdocs serve` - Start the live-reloading docs server.
+* `mkdocs build` - Build the documentation site.
+* `mkdocs -h` - Print help message and exit.
+
+##### Project layout
+
+* mkdocs.yml    # The configuration file.
+* docs/
+   * index.md  # The documentation homepage.
+   * ...       # Other markdown pages, images and other files.

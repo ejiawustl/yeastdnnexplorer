@@ -1,12 +1,19 @@
 {
     "editor.formatOnSave": true,
     "cSpell.words": [
+        "arange",
         "dtype",
+        "ndim",
         "pval",
         "pvalues",
         "randperm"
     ],
     "[markdown]": {
         "editor.formatOnSave": false
-    }
+    },
+    "python.testing.pytestArgs": [
+        "."
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true
 }
