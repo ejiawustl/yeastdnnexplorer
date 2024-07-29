@@ -39,7 +39,7 @@ class PromoterSetSigAPI(AbstractRecordsAndFilesAPI):
 
         url = kwargs.pop("url", os.getenv("PROMOTERSETSIG_URL", None))
 
-        super().__init__(url=url, valid_param_keys=valid_param_keys, **kwargs)
+        super().__init__(url=url, valid_keys=valid_param_keys, **kwargs)
 
     def create(self):
         pass

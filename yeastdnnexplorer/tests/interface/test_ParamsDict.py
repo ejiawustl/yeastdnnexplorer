@@ -20,7 +20,7 @@ def test_getitem():
 
 def test_setitem():
     params = ParamsDict({"a": 1}, valid_keys=["a", "b", "c", "d"])
-    params["b"] = 2
+    params.update({"b": 2})
     assert params == {"a": 1, "b": 2}
 
     params[["c", "d"]] = [3, 4]
@@ -31,6 +31,9 @@ def test_setitem():
 
     with pytest.raises(KeyError):
         params[123] = 5  # type: ignore
+
+    with pytest.raises(KeyError):
+        params.update({"d": 4, "e": 5})
 
 
 def test_delitem():

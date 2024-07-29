@@ -109,7 +109,10 @@ class AbstractAPI(ABC):
 
     def push_params(self, params: dict[str, Any]) -> None:
         """Adds or updates parameters in the ParamsDict."""
-        self.params.update(params)
+        try:
+            self.params.update(params)
+        except KeyError as e:
+            self.logger.error(f"Error updating parameters: {e}")
 
     def pop_params(self, keys: list[str] | None = None) -> None:
         """Removes parameters from the ParamsDict."""

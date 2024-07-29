@@ -5,6 +5,7 @@
         "arange",
         "dtype",
         "ndim",
+        "overexpression",
         "pval",
         "pvalues",
         "randperm",

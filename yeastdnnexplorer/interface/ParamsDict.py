@@ -110,6 +110,23 @@ class ParamsDict(dict):
         """
         return ", ".join(f"{k}: {v}" for k, v in self.items())
 
+    def update(self, *args, **kwargs) -> None:
+        """Update the ParamsDict with the key/value pairs from other, overwriting
+        existing keys."""
+        if args:
+            other = args[0]
+            if isinstance(other, dict):
+                [self._validate_key(k) for k in other.keys()]
+                for key, value in other.items():
+                    self.__setitem__(key, value)
+            else:
+                [self._validate_key(k) for k, _ in other]
+                for key, value in other:
+                    self.__setitem__(key, value)
+        [self._validate_key(k) for k in kwargs.keys()]
+        for key, value in kwargs.items():
+            self.__setitem__(key, value)
+
     def as_dict(self) -> dict:
         """
         Convert the ParamsDict to a standard dictionary.
@@ -120,10 +137,11 @@ class ParamsDict(dict):
         """
         return dict(self)
 
-    def _validate_key(self, key: str) -> None:
+    def _validate_key(self, key: str) -> bool:
         """Validate that the key is in the list of valid keys."""
         if self._valid_keys and key not in self._valid_keys:
-            raise ValueError(f"Invalid parameter key provided: {key}")
+            raise KeyError(f"Invalid parameter key provided: {key}")
+        return True
 
     @property
     def valid_keys(self) -> list[str]:
