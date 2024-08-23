@@ -205,7 +205,8 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         """
         export_files_url = f"{self.url.rstrip('/')}/{self.export_files_url_suffix}"
         self.logger.debug("_retrieve_file() export_url: %s", export_files_url)
-        # Try to get the data from cache if use_cache is True
+
+        # set key for local cache
         cache_key = str(record_id)
         if "effect_colname" in self.params:
             cache_key += f"_{self.params['effect_colname']}"
@@ -218,7 +219,6 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         else:
             self.logger.debug(f"cache_key {cache_key} not found in cache.")
 
-        # Retrieve from the database if not in cache or use_cache is False
         try:
             header = self.header.copy()
             header["Content-Type"] = "application/gzip"
