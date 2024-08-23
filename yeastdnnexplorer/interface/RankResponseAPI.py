@@ -1,6 +1,5 @@
 import gzip
 import json
-import logging
 import os
 import tarfile
 import tempfile
@@ -123,10 +122,10 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
                         return callback(metadata, data, self.cache, **additional_args)
 
                 except aiohttp.ClientError as e:
-                    logging.error(f"Error in GET request: {e}")
+                    self.logger.error(f"Error in GET request: {e}")
                     raise
                 except pd.errors.ParserError as e:
-                    logging.error(f"Error reading request content: {e}")
+                    self.logger.error(f"Error reading request content: {e}")
                     raise
 
     def _extract_files(

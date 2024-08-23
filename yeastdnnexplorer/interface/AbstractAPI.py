@@ -40,7 +40,7 @@ class AbstractAPI(ABC):
             ParamsDict and Cache constructors.
 
         """
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self._token = token or os.getenv("TOKEN", "")
         self.url = url or os.getenv("BASE_URL", "")
         self.params = ParamsDict(
@@ -159,9 +159,11 @@ class AbstractAPI(ABC):
 
         """
         try:
+            # note that with allow_redirect=True the result can be a 300 status code
+            # which is not an error, and then another request to the redirected URL
             response = requests.head(url, headers=self.header, allow_redirects=True)
             if response.status_code != 200:
-                raise ValueError(f"Invalid URL or token provided: {response.content}")
+                raise ValueError("Invalid URL or token provided. Check both.")
         except requests.RequestException as e:
             raise AttributeError(f"Error validating URL: {e}") from e
         except AttributeError as e:
