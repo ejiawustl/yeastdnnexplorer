@@ -108,14 +108,14 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         Retrieve data from the endpoint according to the `retrieve_files` parameter. If
         `retrieve_files` is False, the records will be returned as a dataframe. If
         `retrieve_files` is True, the files associated with the records will be
-        retrieved either from the local cache or from the database. Note that a user
-        can select which effect_colname and pvalue_colname is used for a genomicfile
-        (see database documentation for more details). If one or both of those are
-        present in the params, and retrieve_file is true, then that column name
-        is added to the cache_key. Eg if record 1 is being retrieved from mcisaac
-        data with effect_colname "log2_raio", then the cache_key for that data will
-        be "1_log2_ratio". The default effect colname, which is set by the database,
-        will be stored with only the record id as the cache_key.
+        retrieved either from the local cache or from the database. Note that a user can
+        select which effect_colname and pvalue_colname is used for a genomicfile (see
+        database documentation for more details). If one or both of those are present in
+        the params, and retrieve_file is true, then that column name is added to the
+        cache_key. Eg if record 1 is being retrieved from mcisaac data with
+        effect_colname "log2_raio", then the cache_key for that data will be
+        "1_log2_ratio". The default effect colname, which is set by the database, will
+        be stored with only the record id as the cache_key.
 
         :param callback: The function to call with the metadata. Signature must
             include `metadata`, `data`, and `cache`.
@@ -178,7 +178,6 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :type session: aiohttp.ClientSession
         :param records_df: The DataFrame containing the records.
         :type records_df: pd.DataFrame
-
         :return: A dictionary where the keys are record IDs and the values are
             DataFrames of the associated files.
         :rtype: dict[str, pd.DataFrame]
@@ -247,7 +246,8 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
                     with tarfile.open(fileobj=tar_file, mode="r:gz") as tar:
                         tar_members = tar.getmembers()
                         self.logger.debug(
-                            f"Tar file contains: {[member.name for member in tar_members]}",
+                            f"Tar file contains: "
+                            f"{[member.name for member in tar_members]}",
                         )
 
                         # Find the specific file to extract
