@@ -56,7 +56,7 @@ class AbstractRecordsOnlyAPI(AbstractAPI):
             )
 
         export_url = f"{self.url.rstrip('/')}/{export_url_suffix}"
-        self.logger.debug("export_url: %s", export_url)
+        self.logger.debug("read() export_url: %s", export_url)
 
         async with aiohttp.ClientSession() as session:
             try:

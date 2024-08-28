@@ -1,6 +1,5 @@
 import csv
 import gzip
-import logging
 import os
 import tarfile
 import tempfile
@@ -109,7 +108,14 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         Retrieve data from the endpoint according to the `retrieve_files` parameter. If
         `retrieve_files` is False, the records will be returned as a dataframe. If
         `retrieve_files` is True, the files associated with the records will be
-        retrieved either from the local cache or from the database.
+        retrieved either from the local cache or from the database. Note that a user can
+        select which effect_colname and pvalue_colname is used for a genomicfile (see
+        database documentation for more details). If one or both of those are present in
+        the params, and retrieve_file is true, then that column name is added to the
+        cache_key. Eg if record 1 is being retrieved from mcisaac data with
+        effect_colname "log2_raio", then the cache_key for that data will be
+        "1_log2_ratio". The default effect colname, which is set by the database, will
+        be stored with only the record id as the cache_key.
 
         :param callback: The function to call with the metadata. Signature must
             include `metadata`, `data`, and `cache`.
@@ -117,8 +123,6 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :param retrieve_files: Boolean. Whether to retrieve the files associated with
             the records. Defaults to False.
         :type retrieve_files: bool
-        :param kwargs: Additional arguments to pass to the callback function.
-        :type kwargs: Any
 
         :return: The result of the callback function.
         :rtype: Any
@@ -133,7 +137,7 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
             )
 
         export_url = f"{self.url.rstrip('/')}/{self.export_url_suffix}"
-        self.logger.debug("export_url: %s", export_url)
+        self.logger.debug("read() export_url: %s", export_url)
 
         async with aiohttp.ClientSession() as session:
             try:
@@ -157,10 +161,10 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
                         )
 
             except aiohttp.ClientError as e:
-                logging.error(f"Error in GET request: {e}")
+                self.logger.error(f"Error in GET request: {e}")
                 raise
             except pd.errors.ParserError as e:
-                logging.error(f"Error reading request content: {e}")
+                self.logger.error(f"Error reading request content: {e}")
                 raise
 
     async def _retrieve_files(
@@ -197,28 +201,34 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :type record_id: int
         :return: A DataFrame containing the file's data.
         :rtype: pd.DataFrame
-        :raises FileNotFoundError: If the file is not found in the tar archive.
-        :raises ValueError: If the delimiter is not supported.
 
         """
         export_files_url = f"{self.url.rstrip('/')}/{self.export_files_url_suffix}"
-        self.logger.debug("export_url: %s", export_files_url)
-        # Try to get the data from the cache first
+        self.logger.debug("_retrieve_file() export_url: %s", export_files_url)
+
+        # set key for local cache
         cache_key = str(record_id)
+        if "effect_colname" in self.params:
+            cache_key += f"_{self.params['effect_colname']}"
+        if "pvalue_colname" in self.params:
+            cache_key += f"_{self.params['pvalue_colname']}"
         cached_data = self._cache_get(cache_key)
         if cached_data is not None:
-            logging.info(f"Record ID {record_id} retrieved from cache.")
+            self.logger.info(f"cache_key {cache_key} retrieved from cache.")
             return pd.read_json(BytesIO(cached_data.encode()))
+        else:
+            self.logger.debug(f"cache_key {cache_key} not found in cache.")
 
-        # Retrieve from the database if not in cache
-        logging.info(
-            f"Record ID {record_id} not found in cache. Retrieving from the database."
-        )
         try:
             header = self.header.copy()
             header["Content-Type"] = "application/gzip"
+            retrieve_files_params = self.params.copy()
+            retrieve_files_params.update({"id": record_id})
             async with session.get(
-                export_files_url, headers=header, params={"id": record_id}, timeout=120
+                export_files_url,
+                headers=header,
+                params=retrieve_files_params,
+                timeout=120,
             ) as response:
                 response.raise_for_status()
                 tar_data = await response.read()
@@ -236,8 +246,8 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
                     with tarfile.open(fileobj=tar_file, mode="r:gz") as tar:
                         tar_members = tar.getmembers()
                         self.logger.debug(
-                            "Tar file contains: ",
-                            "{[member.name for member in tar_members]}",
+                            f"Tar file contains: "
+                            f"{[member.name for member in tar_members]}",
                         )
 
                         # Find the specific file to extract
@@ -269,11 +279,12 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
                     df = pd.read_csv(csv_path, delimiter=delimiter)
 
                     # Store the data in the cache
+                    self.logger.debug(f"Storing {cache_key} in cache.")
                     self._cache_set(cache_key, df.to_json())
             finally:
                 os.unlink(tar_file.name)
 
             return df
         except Exception as e:
-            logging.error(f"Error retrieving file for record ID {record_id}: {e}")
+            self.logger.error(f"Error retrieving file for cache_key {cache_key}: {e}")
             raise
