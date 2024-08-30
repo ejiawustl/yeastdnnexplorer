@@ -74,9 +74,13 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :rtype: str
         :raises FileNotFoundError: If the file does not exist.
         :raises gzip.BadGzipFile: If the file is not a valid gzip file.
+        :raises _csv.Error: If the CSV sniffer cannot determine the delimiter.
 
         """
         try:
+            # by default, open() uses newline=False, which opens the file
+            # in universal newline mode and translates all new line characters
+            # to '\n'
             file = (
                 gzip.open(file_path, "rt")
                 if file_path.endswith(".gz")
@@ -86,6 +90,15 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
             raise FileNotFoundError(f"File {file_path} not found.") from exc
 
         sample = file.read(sample_size)
+
+        # In order to avoid errors in the csv sniffer, attempt to find the
+        # last newline character in the string
+        last_newline_index = sample.rfind("\n")
+        # if a newline character is found, trim the sample to the last newline
+        if last_newline_index != -1:
+            # Trim to the last complete line
+            sample = sample[:last_newline_index]
+
         sniffer = csv.Sniffer()
         dialect = sniffer.sniff(sample)
         delimiter = dialect.delimiter
