@@ -72,7 +72,6 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :type sample_size: int
         :return: The delimiter of the CSV file.
         :rtype: str
-
         :raises FileNotFoundError: If the file does not exist.
         :raises gzip.BadGzipFile: If the file is not a valid gzip file.
         :raises _csv.Error: If the CSV sniffer cannot determine the delimiter.
