@@ -140,6 +140,11 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :return: The result of the callback function.
         :rtype: Any
 
+        :raises ValueError: If the callback function does not have the correct
+            signature.
+        :raises aiohttp.ClientError: If there is an error in the GET request.
+        :raises pd.errors.ParserError: If there is an error reading the request
+
         """
         if not callable(callback) or {"metadata", "data", "cache"} - set(
             callback.__code__.co_varnames
@@ -214,6 +219,8 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :type record_id: int
         :return: A DataFrame containing the file's data.
         :rtype: pd.DataFrame
+        :raises FileNotFoundError: If the file is not found in the tar archive.
+        :raises ValueError: If the delimiter is not supported.
 
         """
         export_files_url = f"{self.url.rstrip('/')}/{self.export_files_url_suffix}"

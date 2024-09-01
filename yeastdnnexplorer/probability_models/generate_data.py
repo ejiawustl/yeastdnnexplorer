@@ -98,13 +98,13 @@ def generate_binding_effects(
     :type gene_population: GenePopulation
     :param background_hops_range: The range of hops for background genes. Defaults to
         (1, 100)
-    :type background_hops_range: Tuple[int, int], optional
+    :type background_hops_range: tuple[int, int], optional
     :param unbound_experiment_hops_range: The range of hops for unbound genes. Defaults
         to (0, 1)
-    :type unbound_experiment_hops_range: Tuple[int, int], optional
+    :type unbound_experiment_hops_range: tuple[int, int], optional
     :param bound_experiment_hops_range: The range of hops for bound genes. Defaults to
         (1, 6)
-    :type bound_experiment_hops_range: Tuple[int, int], optional
+    :type bound_experiment_hops_range: tuple[int, int], optional
     :param total_background_hops: The total number of background hops. Defaults to 1000
     :type total_background_hops: int, optional
     :param total_experiment_hops: The total number of experiment hops. Defaults to 76

@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 import pytest
@@ -40,16 +41,20 @@ def test_initialize(snapshot, api_client):
 def test_push_params(snapshot, api_client):
     params = {"param1": "value1", "param2": "value2"}
     api_client.push_params(params)
-    api_client.params.as_dict() == "push_params"
+    # Serialize the dictionary to a JSON string for comparison
+    params_as_json = json.dumps(api_client.params.as_dict(), sort_keys=True)
+    snapshot.assert_match(params_as_json, "push_params")
 
 
 def test_pop_params(snapshot, api_client):
     params = {"param1": "value1", "param2": "value2"}
     api_client.push_params(params)
     api_client.pop_params(["param1"])
-    assert api_client.params.as_dict() == {"param2": "value2"}
+    params_as_json1 = json.dumps(api_client.params.as_dict(), sort_keys=True)
+    snapshot.assert_match(params_as_json1, "pop_params_after_one_removed")
     api_client.pop_params()
-    assert api_client.params.as_dict() == {}
+    params_as_json2 = json.dumps(api_client.params.as_dict(), sort_keys=True)
+    snapshot.assert_match(params_as_json2, "pop_params_after_all_removed")
 
 
 def test_is_valid_url(snapshot, api_client):
@@ -69,9 +74,10 @@ def test_cache_operations(snapshot, api_client):
     snapshot.assert_match(str(api_client._cache_get(key)), "cache_get_after_set")
 
     keys = api_client._cache_list()
-    snapshot.assert_match(", ".join(keys), "cache_list")
+    snapshot.assert_match(str(keys), "cache_list")
 
     api_client._cache_delete(key)
+    snapshot.assert_match(str(api_client._cache_get(key)), "cache_get_after_delete")
     snapshot.assert_match(str(api_client._cache_get(key)), "cache_get_after_delete")
 
 
