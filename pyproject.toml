@@ -24,11 +24,9 @@ python-dotenv = "^1.0.1"
 shiny = "^1.0.0"
 shinywidgets = "^0.3.2"
 plotly = "^5.22.0"
-callingcardstools = "^1.7.1"
 statsmodels = "^0.14.1"
 patsy = "^0.5.6"
 upsetjs-jupyter-widget = "^1.9.0"
-pysam = "0.19.1"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
