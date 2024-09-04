@@ -30,6 +30,7 @@ class PromoterSetSigAPI(AbstractRecordsAndFilesAPI):
                 "batch",
                 "replicate",
                 "source",
+                "source_name",
                 "lab",
                 "assay",
                 "workflow",
