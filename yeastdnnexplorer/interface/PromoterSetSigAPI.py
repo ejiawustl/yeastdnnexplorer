@@ -36,6 +36,7 @@ class PromoterSetSigAPI(AbstractRecordsAndFilesAPI):
                 "workflow",
                 "data_usable",
                 "aggregated",
+                "condition",
             ],
         )
 
