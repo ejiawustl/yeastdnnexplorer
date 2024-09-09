@@ -35,7 +35,13 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
             url=kwargs.pop("url", os.getenv("PROMOTERSETSIG_URL", "")),
             export_files_url_suffix="rankresponse",
             valid_keys=kwargs.pop(
-                "valid_param_keys", ["promotersetsig_id", "expression_id"]
+                "valid_param_keys",
+                [
+                    "promotersetsig_id",
+                    "expression_id",
+                    "expression_effect_threshold",
+                    "expression_pvalue_threshold",
+                ],
             ),
             **kwargs,
         )
