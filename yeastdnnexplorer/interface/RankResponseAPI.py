@@ -42,6 +42,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
                     "expression_effect_threshold",
                     "expression_pvalue_threshold",
                     "rank_bin_size",
+                    "rank_by_binding_effect",
                 ],
             ),
             **kwargs,
