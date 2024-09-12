@@ -1,8 +1,8 @@
-import gzip
 import json
 import os
 import tarfile
 import tempfile
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -34,111 +34,128 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
         super().__init__(
             url=kwargs.pop("url", os.getenv("PROMOTERSETSIG_URL", "")),
             export_files_url_suffix="rankresponse",
-            valid_keys=kwargs.pop(
-                "valid_param_keys",
-                [
-                    "promotersetsig_id",
-                    "expression_id",
-                    "expression_effect_threshold",
-                    "expression_pvalue_threshold",
-                    "rank_bin_size",
-                    "rank_by_binding_effect",
-                ],
-            ),
+            # valid_keys=kwargs.pop(
+            #     "valid_param_keys",
+            #     [
+            #         "promotersetsig_id",
+            #         "expression_id",
+            #         "expression_effect_threshold",
+            #         "expression_pvalue_threshold",
+            #         "rank_bin_size",
+            #         "rank_by_binding_effect",
+            #     ],
+            # ),
             **kwargs,
         )
 
-    async def read(
+    async def submit(
         self,
-        callback: Callable[
-            [pd.DataFrame, dict[str, Any] | None, Any], Any
-        ] = lambda metadata, data, cache, **kwargs: (
-            {"metadata": metadata, "data": data}
-        ),
-        retrieve_files: bool = True,
+        post_dict: dict[str, Any],
         **kwargs,
     ) -> Any:
-        """
-        Retrieve data from the Rank Response API.
+        # make a post request with the post_dict to rankresponse_url
+        rankresponse_url = f"{self.url.rstrip('/')}/rankresponse/"
+        self.logger.debug("rankresponse_url: %s", rankresponse_url)
 
-        :param callback: The function to call with the metadata from the Rank Response
-            API.
-        :param kwargs: Additional parameters to pass to the callback function.
-        :return: The result of the callback function.
-
-        """
-        if not callable(callback) or {"metadata", "data", "cache"} - set(
-            callback.__code__.co_varnames
-        ):
-            raise ValueError(
-                "The callback must be a callable function with `metadata`, ",
-                "`data`, and `cache` as parameters.",
-            )
-
-        if not retrieve_files:
-            self.logger.warning(
-                "The RankResponseAPI does not support "
-                "`retrieve_files=False`. Setting it to `True`."
-            )
-            retrieve_files = True
-
-        required_params = {"promotersetsig_id", "expression_id"}
-        if not required_params.issubset(self.params.keys()):
-            raise ValueError(
-                "`promotersetsig_id` and `expression_id` must be in params"
-            )
-
-        additional_args = kwargs
-
-        cache_key = f"{self.params['promotersetsig_id']}_{self.params['expression_id']}"
-        cached_result = self._cache_get(cache_key)
-
-        if cached_result is not None:
-            return callback(
-                cached_result["metadata"],
-                cached_result["data"],
-                self.cache,
-                **additional_args,
-            )
-        else:
-            async with aiohttp.ClientSession() as session:
-                rankresponse_url = (
-                    f"{self.url.rstrip('/')}/{self.export_files_url_suffix}"
-                )
-                self.logger.debug("rankresponse_url: %s", rankresponse_url)
-
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                rankresponse_url, headers=self.header, json=post_dict
+            ) as response:
+                response.raise_for_status()
+                result = await response.json()
                 try:
-                    async with session.get(
-                        rankresponse_url, headers=self.header, params=self.params
-                    ) as response:
-                        response.raise_for_status()
-                        tar_data = await response.read()
-                        with tempfile.NamedTemporaryFile(
-                            delete=False, suffix=".tar.gz"
-                        ) as temp_file:
-                            temp_file.write(tar_data)
-                            temp_file.flush()
-                            temp_file.seek(0)
-                            try:
-                                metadata, data = self._extract_files(temp_file.name)
-                                self._cache_set(
-                                    cache_key, {"metadata": metadata, "data": data}
-                                )
-                            finally:
-                                os.unlink(temp_file.name)
-
-                        return callback(metadata, data, self.cache, **additional_args)
-
-                except aiohttp.ClientError as e:
-                    self.logger.error(f"Error in GET request: {e}")
-                    raise
-                except pd.errors.ParserError as e:
-                    self.logger.error(f"Error reading request content: {e}")
+                    return result["group_task_id"]
+                except KeyError:
+                    self.logger.error(
+                        "Expected 'group_task_id' in response: %s", json.dumps(result)
+                    )
                     raise
 
-    def _extract_files(
-        self, tar_path: str
-    ) -> tuple[pd.DataFrame, dict[str, pd.DataFrame]]:
+    async def retrieve(
+        self,
+        group_task_id: str,
+        timeout: int = 300,
+        polling_interval: int = 2,
+        **kwargs,
+    ) -> dict[str, pd.DataFrame]:
+        """
+        Periodically check the task status and retrieve the result when the task
+        completes.
+
+        :param group_task_id: The task ID to retrieve results for.
+        :param timeout: The maximum time to wait for the task to complete (in seconds).
+        :param polling_interval: The time to wait between status checks (in seconds).
+        :return: Extracted files from the result tarball.
+
+        """
+        # Start time for timeout check
+        start_time = time.time()
+
+        # Task status URL
+        status_url = f"{self.url.rstrip('/')}/rankresponse_task_status/"
+
+        while True:
+            async with aiohttp.ClientSession() as session:
+                # Send a GET request to check the task status
+                async with session.get(
+                    status_url,
+                    headers=self.header,
+                    params={"group_task_id": group_task_id},
+                ) as response:
+                    response.raise_for_status()  # Raise an error for bad status codes
+                    status_response = await response.json()
+
+                    # Check if the task is complete
+                    if status_response.get("status") == "SUCCESS":
+                        # Fetch and return the tarball
+                        return await self._download_result(group_task_id)
+                    elif status_response.get("status") == "FAILURE":
+                        raise Exception(
+                            f"Task {group_task_id} failed: {status_response}"
+                        )
+
+                    # Check if we have reached the timeout
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time > timeout:
+                        raise TimeoutError(
+                            f"Task {group_task_id} did not "
+                            "complete within {timeout} seconds."
+                        )
+
+                    # Wait for the specified polling interval before checking again
+                    time.sleep(polling_interval)
+
+    async def _download_result(self, group_task_id: str) -> Any:
+        """
+        Download the result tarball after the task is successful.
+
+        :param group_task_id: The group_task_id to download the results for.
+        :return: Extracted metadata and data from the tarball.
+
+        """
+        download_url = f"{self.url.rstrip('/')}/rankresponse_get_data/"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                download_url,
+                headers=self.header,
+                params={"group_task_id": group_task_id},
+            ) as response:
+                response.raise_for_status()  # Ensure request was successful
+                tar_data = await response.read()
+
+                # Save tarball to a temporary file or return raw tar content
+                with tempfile.NamedTemporaryFile(
+                    delete=False, suffix=".tar.gz"
+                ) as temp_file:
+                    temp_file.write(tar_data)
+                    temp_file.flush()
+                    temp_file.seek(0)
+
+                    # Extract and return the content of the tarball
+                    return self._extract_files(temp_file.name)
+
+    def _extract_files(self, tar_path: str) -> dict[str, pd.DataFrame]:
         """
         Extract metadata and associated files from a tarball.
 
@@ -149,9 +166,6 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
         """
         with tarfile.open(tar_path, mode="r:gz") as tar:
             tar_members = tar.getmembers()
-            self.logger.debug(
-                "Tar file contains: %s", [member.name for member in tar_members]
-            )
 
             # Extract metadata.json
             metadata_member = next(
@@ -160,31 +174,49 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
             if metadata_member is None:
                 raise FileNotFoundError("metadata.json not found in tar archive")
 
-            with tar.extractfile(metadata_member) as f:  # type: ignore
+            extracted_file = tar.extractfile(metadata_member)
+            if extracted_file is None:
+                raise FileNotFoundError("Failed to extract metadata.json")
+
+            with extracted_file as f:
                 metadata_dict = json.load(f)
-                metadata_df = pd.DataFrame(metadata_dict.values())
-                metadata_df["expression_id"] = metadata_dict.keys()
+
+            metadata_df = pd.DataFrame(metadata_dict.values())
+            metadata_df["id"] = metadata_dict.keys()
 
             # Extract CSV files
             data = {}
-            for rr_id in metadata_df.id:
+            for rr_id in metadata_df["id"]:
                 csv_filename = f"{rr_id}.csv.gz"
                 member = next((m for m in tar_members if m.name == csv_filename), None)
                 if member is None:
                     raise FileNotFoundError(f"{csv_filename} not found in tar archive")
 
-                with tar.extractfile(member) as f:  # type: ignore
-                    # Decompress the gzip file before reading it with pandas
-                    with gzip.open(f) as gz:
-                        data[rr_id] = pd.read_csv(gz)
+                extracted_file = tar.extractfile(member)
+                if extracted_file is None:
+                    raise FileNotFoundError(f"Failed to extract {csv_filename}")
 
-        return metadata_df, data
+                with extracted_file as f:
+                    data[rr_id] = pd.read_csv(f, compression="gzip")
+        return {"metadata": metadata_df, "data": data}
 
-    def create(self):
-        pass
+    async def read(
+        self,
+        callback: Callable[
+            [pd.DataFrame, dict[str, Any] | None, Any], Any
+        ] = lambda metadata, data, cache, **kwargs: (
+            {"metadata": metadata, "data": data}
+        ),
+        retrieve_files: bool = False,
+        **kwargs,
+    ) -> Any:
+        raise NotImplementedError("The RankResponseAPI does not support read.")
 
-    def update(self):
-        pass
+    def create(self, data: dict[str, Any], **kwargs) -> Any:
+        raise NotImplementedError("The RankResponseAPI does not support create.")
 
-    def delete(self):
-        pass
+    def update(self, df: pd.DataFrame, **kwargs) -> Any:
+        raise NotImplementedError("The RankResponseAPI does not support update.")
+
+    def delete(self, id: str, **kwargs) -> Any:
+        raise NotImplementedError("The RankResponseAPI does not support delete.")
