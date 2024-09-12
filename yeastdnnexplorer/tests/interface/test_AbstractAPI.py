@@ -23,6 +23,14 @@ class ConcreteAPI(AbstractAPI):
     def delete(self, id: str, **kwargs) -> Any:
         pass  # Implement for testing if necessary
 
+    def submit(self, post_dict: dict, **kwargs) -> Any:
+        pass  # Implement for testing if necessary
+
+    def retrieve(
+        self, group_task_id: str, timeout: int, polling_interval: int, **kwargs
+    ) -> Any:
+        pass  # Implement for testing if necessary
+
 
 @pytest.fixture
 @responses.activate

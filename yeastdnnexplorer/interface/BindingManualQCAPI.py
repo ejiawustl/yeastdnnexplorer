@@ -56,9 +56,6 @@ class BindingManualQCAPI(AbstractRecordsOnlyAPI):
     def bulk_update_url_suffix(self, value: str) -> None:
         self._bulk_update_url_suffix = value
 
-    def create(self):
-        pass
-
     def update(self, df: pd.DataFrame, **kwargs: Any) -> requests.Response:
         """
         Update the records in the database.
@@ -94,5 +91,16 @@ class BindingManualQCAPI(AbstractRecordsOnlyAPI):
             self.logger.error(f"Error in POST request: {e}")
             raise
 
-    def delete(self):
-        pass
+    def create(self, data: dict[str, Any], **kwargs) -> Any:
+        raise NotImplementedError("The BindingManualQCAPI does not support create.")
+
+    def delete(self, id: str, **kwargs) -> Any:
+        raise NotImplementedError("The BindingManualQCAPI does not support delete.")
+
+    def submit(self, post_dict: dict[str, Any], **kwargs) -> Any:
+        raise NotImplementedError("The BindingManualQCAPI does not support submit.")
+
+    def retrieve(
+        self, group_task_id: str, timeout: int, polling_interval: int, **kwargs
+    ) -> Any:
+        raise NotImplementedError("The BindingManualQCAPI does not support retrieve.")

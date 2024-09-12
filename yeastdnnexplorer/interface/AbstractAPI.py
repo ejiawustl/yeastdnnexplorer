@@ -1,6 +1,7 @@
 import logging
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Coroutine
 from typing import Any
 
 import pandas as pd
@@ -150,6 +151,22 @@ class AbstractAPI(ABC):
         """Placeholder for the delete method."""
         raise NotImplementedError(
             f"`delete()` is not implemented for {self.__class__.__name__}"
+        )
+
+    @abstractmethod
+    def submit(self, post_dict: dict[str, Any], **kwargs) -> Any:
+        """Placeholder for the submit method."""
+        raise NotImplementedError(
+            f"`submit()` is not implemented for {self.__class__.__name__}"
+        )
+
+    @abstractmethod
+    def retrieve(
+        self, group_task_id: str, timeout: int, polling_interval: int, **kwargs
+    ) -> Coroutine[Any, Any, Any]:
+        """Placeholder for the retrieve method."""
+        raise NotImplementedError(
+            f"`retrieve()` is not implemented for {self.__class__.__name__}"
         )
 
     def _is_valid_url(self, url: str) -> None:
