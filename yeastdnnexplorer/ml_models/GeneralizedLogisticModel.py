@@ -1,8 +1,17 @@
+from typing import Optional
+
 import numpy as np
 
 
 class GeneralizedLogisticModel:
-    def __init__(self, A, D, B, C, E=None):
+    def __init__(
+        self,
+        A: Optional[float] = None,
+        D: Optional[float] = None,
+        B: Optional[float] = None,
+        C: Optional[float] = None,
+        E: Optional[float] = None,
+    ):
         """
         Generalized logistic function with an interactor term.
 
@@ -13,7 +22,19 @@ class GeneralizedLogisticModel:
         .. math::
             Y(X) = \frac{A - D}{1 + e^{-(B + E(Y_{\text{interactor}} - C))(X - C)}} + D
 
-        Where:
+        :param A: Upper asymptote (maximum value of the curve as :math:`X \to \infty`).
+        :type A: float
+        :param D: Lower asymptote (minimum value of the curve as :math:`X \to -\infty`).
+        :type D: float
+        :param B: Slope parameter at the inflection point (steepness of the curve).
+        :type B: float
+        :param C: Inflection point, where the curve changes its direction most rapidly.
+        :type C: float
+        :param E: Interaction coefficient, representing the strength of
+            the interactor's influence on the slope.
+        :type E: float
+
+        Whe
 
         - :math:`A` is the upper asymptote
             (the maximum value as :math:`X \to \infty`).
@@ -69,11 +90,37 @@ class GeneralizedLogisticModel:
         >>> generalized_logistic_with_interactor(X, A, D, B, C, E, Y_interactor)
         55.8823
         """
+        self.X = None
+        self.Y_interactor = None
         self.A = A
         self.D = D
         self.B = B
         self.C = C
-        self.E = E  # Interaction coefficient for the interactor
+        self.E = E
+
+    def __repr__(self):
+        raise NotImplementedError("This method is not implemented yet.")
+
+    def __print__(self):
+        raise NotImplementedError("This method is not implemented yet.")
+
+    def __call__(self, *args, **kwargs):
+        """
+        This passes the arguments to the predict method.
+
+        :raises: ValueError if the arguments required by predict() are not provided.
+        """
+        # first check if there is at least one argument in args
+        if len(args) > 0:
+            return self.predict(*args, **kwargs)
+        # else check if at least X is in kwargs
+        elif "X" in kwargs:
+            return self.predict(**kwargs)
+        # else raise an error
+        else:
+            raise ValueError(
+                "At least the data (`X`) must be provided to make a prediction"
+            )
 
     def _sigmoid(self, X, Y_interactor=None):
         """
@@ -103,3 +150,21 @@ class GeneralizedLogisticModel:
         """
         # Implementation of fitting logic if needed
         pass
+
+    def plot(self):
+        """
+        Diagnostic plots for the generalized logistic model.
+        Similar to R's `lm()` diagnostic plots, this function would display:
+
+        - Residuals vs Fitted
+        - Normal Q-Q plot
+        - Scale-Location plot
+        - Residuals vs Leverage
+
+        These plots help in diagnosing the fit of the model, checking for
+        non-linearity, normality of residuals, heteroscedasticity, and
+        influential points.
+        """
+        raise NotImplementedError(
+            "This method is a placeholder for the diagnostic plot functionality."
+        )
