@@ -4,6 +4,7 @@
         "aiohttp",
         "arange",
         "dtype",
+        "ndarray",
         "ndim",
         "overexpression",
         "pval",

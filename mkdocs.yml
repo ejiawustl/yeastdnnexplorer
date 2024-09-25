@@ -23,6 +23,18 @@ plugins:
             options:
               docstring_style: 'sphinx'
 
+markdown_extensions:
+  - smarty
+  - toc:
+      permalink: True
+  - sane_lists
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
 nav:
 - Home: index.md
 - Tutorials:
@@ -32,6 +44,7 @@ nav:
   - Lightning Crash Course: tutorials/lightning_crash_course.ipynb
   - Testing Model Metrics: tutorials/testing_model_metrics.ipynb
   - Visualizing and Testing Data Generation Methods: tutorials/visualizing_and_testing_data_generation_methods.ipynb
+  - Generalized Logistic Models: tutorials/generalized_logistic_models.ipynb
 - API:
   - Data Loaders:
     - Synthetic Data Loader: data_loaders/synthetic_data_loader.md
@@ -41,6 +54,7 @@ nav:
     - ml_models/metrics_compute_nrmse.md
     - ml_models/metrics_smse.md
     - ml_models/simple_model.md
+    - ml_models/GeneralizedLogisticModel.md
   - Probability Models:
     - probability_models/default_perturbation_effect_adjustment_function.md
     - probability_models/GenePopulation.md
@@ -70,9 +84,3 @@ nav:
       - interface/AbstractRecordsOnlyAPI.md
       - interface/Cache.md
       - interface/ParamsDict.md
-
-markdown_extensions:
-    - smarty
-    - toc:
-        permalink: True
-    - sane_lists
