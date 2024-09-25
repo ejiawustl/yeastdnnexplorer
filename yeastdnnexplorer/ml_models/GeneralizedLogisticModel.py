@@ -1,13 +1,13 @@
 import logging
 import numbers
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import ArrayLike, NDArray
+from numpy.typing import NDArray
 from scipy import stats
 from scipy.optimize import curve_fit
-from tabulate import tabulate
+from tabulate import tabulate  # type: ignore
 
 logger = logging.getLogger("general")
 
@@ -16,10 +16,10 @@ def sigmoid(
     X: NDArray[np.float_],  # X should be a 2D array of floats
     upper_asymptote: float,
     lower_asymptote: float,
-    inflection_point: Union[
-        NDArray[np.float_], float
-    ],  # inflection point can be a 1D array or a scalar
-    B: Union[NDArray[np.float_], float],  # B can also be a 1D array or scalar
+    inflection_point: (
+        NDArray[np.float_] | float
+    ),  # inflection point can be a 1D array or a scalar
+    B: NDArray[np.float_] | float,  # B can also be a 1D array or scalar
 ) -> NDArray[np.float_]:
     """
     Generalized sigmoid function for multiple variables.
@@ -42,6 +42,7 @@ def sigmoid(
 
     :return: The value of the logistic function at X.
     :rtype: np.ndarray
+
     """
     if lower_asymptote >= upper_asymptote:
         raise ValueError("Lower asymptote must be less than the upper asymptote.")
@@ -74,9 +75,7 @@ def sigmoid(
 
 class GeneralizedLogisticModel:
     def __init__(self):
-        """
-        Generalized logistic function with an interactor term.
-        """
+        """Generalized logistic function with an interactor term."""
         self._X: np.ndarray | None = None
         self._y: np.ndarray | None = None
         self._upper_asymptote: float | None = None
@@ -94,14 +93,13 @@ class GeneralizedLogisticModel:
         :param value: The input data matrix. Must be two dimensional even if there is
             only one predictor.
         :type value: np.ndarray
-
         :return: The input data matrix.
         :rtype: np.ndarray
-
         :raises: TypeError if X is not a NumPy array.
         :raises: ValueError if X is not 2D.
         :raises: ValueError if the number of columns in X does not match the length of
             the inflection point or coefficients.
+
         """
         return self._X
 
@@ -139,13 +137,12 @@ class GeneralizedLogisticModel:
 
         :param value: The observed output data.
         :type value: np.ndarray
-
         :return: The observed output data.
         :rtype: np.ndarray
-
         :raises: TypeError if y is not a NumPy array or a list.
-        :raises: ValueError if the number of rows in y
-            does not match the number of rows in X.
+        :raises: ValueError if the number of rows in y does not match the number of rows
+            in X.
+
         """
         return self._y
 
@@ -164,17 +161,15 @@ class GeneralizedLogisticModel:
     @property
     def upper_asymptote(self) -> float | None:
         """
-        Set the upper asymptote for the model. This parameter can be inferred by
-            `fit()`
+        Set the upper asymptote for the model. This parameter can be inferred by `fit()`
 
         :param value: The upper asymptote of the sigmoid function.
         :type value: float
-
         :return: The upper asymptote of the sigmoid function.
         :rtype: float
-
         :raises: TypeError if the upper asymptote is not a real number.
         :raises: ValueError if the upper asymptote is less than the lower asymptote.
+
         """
         return self._upper_asymptote
 
@@ -194,13 +189,13 @@ class GeneralizedLogisticModel:
     def lower_asymptote(self) -> float | None:
         """
         The lower asymptote of the sigmoid function. This parameter can be inferred by
-            `fit()`
+        `fit()`
 
         :return: The lower asymptote of the sigmoid function.
         :rtype: float
-
         :raises: TypeError if the lower asymptote is not a real number.
         :raises: ValueError if the lower asymptote is greater than the upper asymptote.
+
         """
         return self._lower_asymptote
 
@@ -218,17 +213,16 @@ class GeneralizedLogisticModel:
     def inflection_point(self) -> np.ndarray | None:
         """
         Set the inflection point for the model. This parameter can be inferred by
-            `fit()`
+        `fit()`
 
         :param value: The inflection point of the sigmoid function.
         :type value: np.ndarray
-
         :return: The inflection point of the sigmoid function.
         :rtype: np.ndarray
-
         :raises: TypeError if the inflection point is not a NumPy array or a list.
         :raises: ValueError if the length of the inflection point does not match the
             number of columns in X or the number of coefficients.
+
         """
         return self._inflection_point
 
@@ -259,13 +253,12 @@ class GeneralizedLogisticModel:
 
         :param value: The coefficients of the sigmoid function.
         :type value: np.ndarray
-
         :return: The coefficients of the sigmoid function.
         :rtype: np.ndarray
-
         :raises: TypeError if the coefficients are not a NumPy array or a list.
         :raises: ValueError if the length of the coefficients does not match the number
             of columns in X or the number of inflection points.
+
         """
         return self._coefficients
 
@@ -296,12 +289,12 @@ class GeneralizedLogisticModel:
     def cov(self) -> np.ndarray | None:
         """
         The covariance matrix of the model parameters. This parameter can be inferred by
-            `fit()`
+        `fit()`
 
         :return: The covariance matrix of the model parameters.
         :rtype: np.ndarray
-
         :raises: TypeError if the covariance matrix is not a NumPy array.
+
         """
         return self._cov
 
@@ -318,8 +311,8 @@ class GeneralizedLogisticModel:
 
         :return: The residuals of the model.
         :rtype: np.ndarray
-
         :raises: TypeError if the residuals are not a NumPy array.
+
         """
         return self._residuals
 
@@ -329,7 +322,7 @@ class GeneralizedLogisticModel:
             raise TypeError("residuals must be a NumPy array.")
         self._residuals = value
 
-    def __call__(self, X: ArrayLike):
+    def __call__(self, X: np.ndarray) -> np.ndarray:
         """
         This passes the arguments to the predict method.
 
@@ -344,11 +337,10 @@ class GeneralizedLogisticModel:
 
         :param X: Input data matrix
         :type X: np.ndarray
-
         :return: Predictions based on the learned model parameters
         :rtype: np.ndarray
-
         :raises: ValueError if the model has not been fitted.
+
         """
         if self.upper_asymptote is None or self.lower_asymptote is None:
             raise ValueError("Model must be fitted before making predictions.")
@@ -368,11 +360,12 @@ class GeneralizedLogisticModel:
         """
         Set the predictor and response variables for the model.
 
-        :param X: The input data matrix. Must be two dimensional even if there is
-            only one predictor.
+        :param X: The input data matrix. Must be two dimensional even if there is only
+            one predictor.
         :type X: np.ndarray
         :param y: The observed output data.
         :type y: np.ndarray
+
         """
         print(f"Input y shape: {y.shape}")  # Check the shape of X before setting
         self.y = y
@@ -380,16 +373,17 @@ class GeneralizedLogisticModel:
         self.X = X  # This should set the 2D array correctly
 
     def fit(self, **kwargs) -> None:
-        """Fit the model to the data
-        :param kwargs: Additional keyword arguments. These include:
+        """
+        Fit the model to the data :param kwargs: Additional keyword arguments. These
+        include:
 
-            - **upper_asymptote**: Initial guess for the upper asymptote.
-                Defaults to 1.0.
-            - **lower_asymptote**: Initial guess for the lower asymptote.
-                Defaults to 0.0.
-            - **inflection_point**: Initial guess for the inflection point.
-            - **initial_coefficients**: Initial guess for the coefficients.
-            - Any other kwargs are passed on to `scipy.optimize.curve_fit`.
+        - **upper_asymptote**: Initial guess for the upper asymptote.
+            Defaults to 1.0.
+        - **lower_asymptote**: Initial guess for the lower asymptote.
+            Defaults to 0.0.
+        - **inflection_point**: Initial guess for the inflection point.
+        - **initial_coefficients**: Initial guess for the coefficients.
+        - Any other kwargs are passed on to `scipy.optimize.curve_fit`.
 
         """
 
@@ -440,9 +434,7 @@ class GeneralizedLogisticModel:
         self.residuals = infodict.get("fvec")
 
     def summary(self) -> None:
-        """
-        Generate a summary of the model and diagnostic statistics.
-        """
+        """Generate a summary of the model and diagnostic statistics."""
         if self.X is None or self.y is None or self.coefficients is None:
             raise ValueError("Model must be fitted before generating a summary.")
 
@@ -540,6 +532,7 @@ class GeneralizedLogisticModel:
         :param plots_to_display: A list of integers (1 to 4) indicating
             which plots to show.
         :type plots_to_display: list[int]
+
         """
 
         if self.X is None or self.y is None or self.residuals is None:
