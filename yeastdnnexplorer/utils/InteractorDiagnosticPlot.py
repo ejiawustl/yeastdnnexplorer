@@ -136,8 +136,8 @@ class InteractorDiagnosticPlot:
         ax.axhline(0, color="black", linestyle="--", linewidth=self.line_thickness)
         ax.tick_params(axis="both", which="major", labelsize=self.axis_tick_font_size)
         ax.legend(fontsize=self.legend_font_size, loc="upper left", frameon=False)
-        ax.set_xlabel("CBF1 binding strength", fontsize=self.font_size)
-        ax.set_ylabel("CBF1 perturbation response", fontsize=self.font_size)
+        ax.set_xlabel("Perturbed TF binding strength", fontsize=self.font_size)
+        ax.set_ylabel("Perturbed TF perturbation response", fontsize=self.font_size)
 
     def plot(self, **kwargs):
         """Main plotting method that returns the `plt` object for further
