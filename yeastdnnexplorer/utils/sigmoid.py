@@ -9,11 +9,7 @@ def sigmoid(
     B: NDArray[np.float_] | float,  # B can also be a 1D array or scalar
 ) -> NDArray[np.float_]:
     """
-    Generalized sigmoid function for multiple variables.
-
-    This function calculates a generalized sigmoid where the slope parameters
-    `B_i` are applied to each variable, with the inflection point shifting each
-    variable independently.
+    Generalized logistic function for multiple variables.
 
     $$
     Y(X) = \\frac{upper\\_asymptote - lower\\_asymptote}
