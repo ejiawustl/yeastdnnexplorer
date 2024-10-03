@@ -50,11 +50,13 @@ class InteractorDiagnosticPlot:
         if self.model_type == "sigmoid":
             if self.left_asymptote is None or self.right_asymptote is None:
                 raise ValueError(
-                    "You must provide left_asymptote and right_asymptote for sigmoid model."
+                    "You must provide left_asymptote and "
+                    "right_asymptote for sigmoid model."
                 )
 
     def compute_ecdf(self):
-        """Computes the ECDF for the third column and splits the data into bottom and top quantiles."""
+        """Computes the ECDF for the third column and splits the data into bottom and
+        top quantiles."""
         self.df["ecdf"] = self.df.iloc[:, 2].rank(method="max") / len(self.df)
         self.df_bottom = self.df[self.df["ecdf"] <= self.quantile].copy()
         self.df_top = self.df[self.df["ecdf"] >= (1 - self.quantile)].copy()
@@ -138,7 +140,8 @@ class InteractorDiagnosticPlot:
         ax.set_ylabel("CBF1 perturbation response", fontsize=self.font_size)
 
     def plot(self, **kwargs):
-        """Main plotting method that returns the `plt` object for further customization."""
+        """Main plotting method that returns the `plt` object for further
+        customization."""
         if self.model_type == "sigmoid":
             for k in ["left_asymptote", "right_asymptote", "B"]:
                 if k in kwargs:
@@ -187,5 +190,6 @@ class InteractorDiagnosticPlot:
         return plt
 
     def __call__(self, **kwargs):
-        """Allows the object to be called like a function, invoking the `plot` method."""
+        """Allows the object to be called like a function, invoking the `plot`
+        method."""
         return self.plot(**kwargs)

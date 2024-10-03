@@ -246,6 +246,7 @@ class GeneralizedLogisticModel:
 
         :return: The number of parameters in the model.
         :raises: AttributeError if the coefficients are not available.
+
         """
         if self.X is None:
             raise AttributeError("X not available. Set with `model()`.")
@@ -261,6 +262,7 @@ class GeneralizedLogisticModel:
 
         :return: The residual degrees of freedom of the model.
         :rtype: int
+
         """
         if self.X is None:
             return 0
@@ -302,11 +304,10 @@ class GeneralizedLogisticModel:
 
         :return: The total sum of squares of the model.
         :rtype: float
-        :raises: AttributeError if the residuals are not available.
+        :raises: AssertionError if the output data y is not available.
 
         """
-        if self.residuals is None:
-            raise AttributeError("Residuals are not available.")
+        assert self.y is not None, "Output data y is not available."
         return np.sum((self.y - np.mean(self.y)) ** 2)
 
     @property
@@ -316,11 +317,11 @@ class GeneralizedLogisticModel:
 
         :return: The variance explained by the model.
         :rtype: float
-        :raises: AttributeError if the residuals are not available.
+        :raises AssertionError: If the residuals are not available.
 
         """
-        if self.residuals is None:
-            raise AttributeError("Residuals are not available.")
+        assert self.rss is not None, "RSS is not available."
+        assert self.tss is not None, "TSS is not available."
         return 1 - (self.rss / self.tss)
 
     @property
@@ -333,9 +334,9 @@ class GeneralizedLogisticModel:
         :raises: AttributeError if the residuals are not available.
 
         """
-        if self.residuals is None:
-            raise AttributeError("Residuals are not available.")
+        assert self.residuals is not None, "Residuals are not available."
         # Number of observations
+        assert self.y is not None, "Output data y is not available."
         n = len(self.y)
 
         # Variance of the residuals (sigma^2). denominator is N, not N-1. ddof=1 is
@@ -376,10 +377,11 @@ class GeneralizedLogisticModel:
 
         :return: The Bayesian Information Criterion (BIC) for the model.
         :raises: AttributeError if the log-likelihood is not available.
+        :raises: AttributeError if the input data matrix X is not available.
 
         """
-        if self.llf is None:
-            raise AttributeError("Log-likelihood is not available.")
+        assert self.llf is not None, "Log-likelihood is not available."
+        assert self.X is not None, "Input data matrix X is not available."
         # BIC = plog(n) − 2log(L)
         return self.n_params * np.log(self.X.shape[0]) - 2 * self.llf
 
@@ -479,10 +481,12 @@ class GeneralizedLogisticModel:
         self.jacobian = infodict.get("fjac")
 
     def summary(self) -> None:
-        """Generate a summary of the model and diagnostic statistics.
+        """
+        Generate a summary of the model and diagnostic statistics.
 
-        This method automatically performs LRT comparisons between the full model
-        and models with one less predictor in each iteration.
+        This method automatically performs LRT comparisons between the full model and
+        models with one less predictor in each iteration.
+
         """
         if self.X is None or self.y is None or self.coefficients is None:
             raise ValueError("Model must be fitted before generating a summary.")
@@ -562,6 +566,7 @@ class GeneralizedLogisticModel:
             reduced_model.fit()
 
             # Calculate log-likelihood for the reduced model
+            assert reduced_model.llf is not None, "Log-likelihood not available."
             log_likelihood_reduced = reduced_model.llf
 
             # Perform LRT between the full model and the reduced model
@@ -609,6 +614,7 @@ class GeneralizedLogisticModel:
             plot (default False).
         :param kwargs: Additional keyword arguments to pass to the plotting functions.
             Currently passes arguments to the `InteractorDiagnosticPlot` class.
+
         """
         if self.X is None or self.y is None or self.residuals is None:
             raise ValueError("Model must be fitted before plotting diagnostics.")
