@@ -16,25 +16,15 @@ from yeastdnnexplorer.utils.sigmoid import sigmoid
 logger = logging.getLogger("general")
 
 
-def calculate_nonlinear_leverage(J):
-    """Calculate leverage (hat matrix diagonal) from the Jacobian matrix."""
-    # (J^T J)^(-1) -- note that the transpose is reversed because of the format
-    # that it is output by curve_fit
-    JTJ_inv = np.linalg.inv(np.dot(J, J.T))
-    H = np.dot(np.dot(J.T, JTJ_inv), J)  # H = J (J^T J)^(-1) J^T -- see note above
-    leverage = np.diag(H)  # Extract diagonal elements
-    return leverage
-
-
-def cooks_distance(residuals, leverage, mse, p):
-    """Compute Cook's Distance using raw residuals."""
-    cooks_d = (residuals**2 / (p * mse)) * (leverage / (1 - leverage) ** 2)
-    return cooks_d
-
-
 class GeneralizedLogisticModel:
+    """
+    Generalized logistic model for fitting sigmoidal curves to data.
+    """
+
     def __init__(self):
-        """Generalized logistic function with an interactor term."""
+        """
+        Initialize the generalized logistic model.
+        """
         self._X: np.ndarray | None = None
         self._y: np.ndarray | None = None
         self._right_asymptote: float | None = None
@@ -51,12 +41,12 @@ class GeneralizedLogisticModel:
 
         :param value: The input data matrix. Must be two dimensional even if there is
             only one predictor.
-        :type value: np.ndarray
+
         :return: The input data matrix.
-        :rtype: np.ndarray
-        :raises: TypeError if X is not a NumPy array.
-        :raises: ValueError if X is not 2D.
-        :raises: ValueError if the number of columns in X does not match the length of
+
+        :raises TypeError: if X is not a NumPy array.
+        :raises ValueError: if X is not 2D.
+        :raises ValueError: if the number of columns in X does not match the length of
             the inflection point or coefficients.
 
         """
@@ -88,11 +78,11 @@ class GeneralizedLogisticModel:
         Set the response variable for the model.
 
         :param value: The observed output data.
-        :type value: np.ndarray
+
         :return: The observed output data.
-        :rtype: np.ndarray
-        :raises: TypeError if y is not a NumPy array or a list.
-        :raises: ValueError if the number of rows in y does not match the number of rows
+
+        :raises TypeError: if y is not a NumPy array or a list.
+        :raises ValueError: if the number of rows in y does not match the number of rows
             in X.
 
         """
@@ -116,11 +106,11 @@ class GeneralizedLogisticModel:
         Set the upper asymptote for the model. This parameter can be inferred by `fit()`
 
         :param value: The upper asymptote of the sigmoid function.
-        :type value: float
+
         :return: The upper asymptote of the sigmoid function.
-        :rtype: float
-        :raises: TypeError if the upper asymptote is not a real number.
-        :raises: ValueError if the upper asymptote is less than the lower asymptote.
+
+        :raises TypeError: if the upper asymptote is not a real number.
+        :raises ValueError: if the upper asymptote is less than the lower asymptote.
 
         """
         return self._right_asymptote
@@ -139,9 +129,9 @@ class GeneralizedLogisticModel:
         `fit()`
 
         :return: The lower asymptote of the sigmoid function.
-        :rtype: float
-        :raises: TypeError if the lower asymptote is not a real number.
-        :raises: ValueError if the lower asymptote is greater than the upper asymptote.
+
+        :raises TypeError: if the lower asymptote is not a real number.
+        :raises ValueError: if the lower asymptote is greater than the upper asymptote.
 
         """
         return self._left_asymptote
@@ -159,11 +149,11 @@ class GeneralizedLogisticModel:
         Set the coefficients for the model. This parameter can be inferred by `fit()`
 
         :param value: The coefficients of the sigmoid function.
-        :type value: np.ndarray
+
         :return: The coefficients of the sigmoid function.
-        :rtype: np.ndarray
-        :raises: TypeError if the coefficients are not a NumPy array or a list.
-        :raises: ValueError if the length of the coefficients does not match the number
+
+        :raises TypeError: if the coefficients are not a NumPy array or a list.
+        :raises ValueError: if the length of the coefficients does not match the number
             of columns in X or the number of inflection points.
 
         """
@@ -191,9 +181,8 @@ class GeneralizedLogisticModel:
         `fit()`
 
         :return: The covariance matrix of the model parameters.
-        :rtype: np.ndarray
-        :raises: TypeError if the covariance matrix is not a NumPy array.
 
+        :raises TypeError: if the covariance matrix is not a NumPy array.
         """
         return self._cov
 
@@ -209,9 +198,8 @@ class GeneralizedLogisticModel:
         The residuals of the model. This parameter can be inferred by `fit()`
 
         :return: The residuals of the model.
-        :rtype: np.ndarray
-        :raises: TypeError if the residuals are not a NumPy array.
 
+        :raises TypeError: if the residuals are not a NumPy array.
         """
         return self._residuals
 
@@ -227,9 +215,8 @@ class GeneralizedLogisticModel:
         The Jacobian matrix of the model. This parameter can be inferred by `fit()`
 
         :return: The Jacobian matrix of the model.
-        :rtype: np.ndarray
-        :raises: TypeError if the Jacobian matrix is not a NumPy array.
 
+        :raises TypeError: if the Jacobian matrix is not a NumPy array.
         """
         return self._jacobian
 
@@ -245,7 +232,7 @@ class GeneralizedLogisticModel:
         The number of parameters in the model.
 
         :return: The number of parameters in the model.
-        :raises: AttributeError if the coefficients are not available.
+        :raises AttributeError: if the coefficients are not available.
 
         """
         if self.X is None:
@@ -261,11 +248,10 @@ class GeneralizedLogisticModel:
         Residual degrees of freedom = number of observations - number of parameters
 
         :return: The residual degrees of freedom of the model.
-        :rtype: int
 
+        :raises AssertionError: if the input data matrix X is not available.
         """
-        if self.X is None:
-            return 0
+        assert self.X is not None, "Input data matrix X is not available."
         # Number of parameters = number of coefficients + 2 (for the two asymptotes)
         return self.X.shape[0] - self.n_params
 
@@ -275,9 +261,8 @@ class GeneralizedLogisticModel:
         The mean squared error of the model.
 
         :return: The mean squared error of the model.
-        :rtype: float
-        :raises: AttributeError if the residuals are not available.
 
+        :raises AttributeError: if the residuals are not available.
         """
         if self.residuals is None:
             raise AttributeError("Residuals are not available.")
@@ -289,9 +274,8 @@ class GeneralizedLogisticModel:
         The residual sum of squares of the model.
 
         :return: The residual sum of squares of the model.
-        :rtype: float
-        :raises: AttributeError if the residuals are not available.
 
+        :raises AttributeError: if the residuals are not available.
         """
         if self.residuals is None:
             raise AttributeError("Residuals are not available.")
@@ -303,11 +287,11 @@ class GeneralizedLogisticModel:
         The total sum of squares of the model.
 
         :return: The total sum of squares of the model.
-        :rtype: float
-        :raises: AssertionError if the output data y is not available.
 
+        :raises AttributeError: if the output data y is not available.
         """
-        assert self.y is not None, "Output data y is not available."
+        if self.y is None:
+            raise AttributeError("Output data y is not available.")
         return np.sum((self.y - np.mean(self.y)) ** 2)
 
     @property
@@ -316,27 +300,33 @@ class GeneralizedLogisticModel:
         The variance explained by the model.
 
         :return: The variance explained by the model.
-        :rtype: float
-        :raises AssertionError: If the residuals are not available.
 
+        :raises AttributeError: `rss` or `tss` is not available
         """
-        assert self.rss is not None, "RSS is not available."
-        assert self.tss is not None, "TSS is not available."
+        if self.rss is None:
+            raise AttributeError(
+                "`rss` is not available. Check that `fit()` has been run."
+            )
+        if self.tss is None:
+            raise AttributeError(
+                "`tss` is not available. Check that `model()` has been run."
+            )
         return 1 - (self.rss / self.tss)
 
     @property
     def llf(self) -> float | None:
         """
-        The log-likelihood of the model.
+        The log-likelihood of the model. Note that this assumes Gaussian residuals.
 
         :return: The log-likelihood of the model.
-        :rtype: float
-        :raises: AttributeError if the residuals are not available.
 
+        :raises AttributeError: if the residuals or y are not available.
         """
-        assert self.residuals is not None, "Residuals are not available."
+        if self.residuals is None:
+            raise AttributeError("Residuals are not available.")
         # Number of observations
-        assert self.y is not None, "Output data y is not available."
+        if self.y is None:
+            raise AttributeError("Output data y is not available.")
         n = len(self.y)
 
         # Variance of the residuals (sigma^2). denominator is N, not N-1. ddof=1 is
@@ -363,8 +353,8 @@ class GeneralizedLogisticModel:
         Calculate the Akaike Information Criterion (AIC) for the model.
 
         :return: The Akaike Information Criterion (AIC) for the model.
-        :raises: AttributeError if the log-likelihood is not available.
 
+        :raises AttributeError: if the log-likelihood is not available.
         """
         if self.llf is None:
             raise AttributeError("Log-likelihood is not available.")
@@ -376,12 +366,13 @@ class GeneralizedLogisticModel:
         Calculate the Bayesian Information Criterion (BIC) for the model.
 
         :return: The Bayesian Information Criterion (BIC) for the model.
-        :raises: AttributeError if the log-likelihood is not available.
-        :raises: AttributeError if the input data matrix X is not available.
 
+        :raises AttributeError: if the log-likelihood or X is not available.
         """
-        assert self.llf is not None, "Log-likelihood is not available."
-        assert self.X is not None, "Input data matrix X is not available."
+        if self.llf is None:
+            raise AttributeError("Log-likelihood is not available.")
+        if self.X is None:
+            raise AttributeError("Input data matrix X is not available.")
         # BIC = plog(n) − 2log(L)
         return self.n_params * np.log(self.X.shape[0]) - 2 * self.llf
 
@@ -390,10 +381,10 @@ class GeneralizedLogisticModel:
         Make predictions using the generalized logistic model.
 
         :param X: Input data matrix
-        :type X: np.ndarray
+
         :return: Predictions based on the learned model parameters
-        :rtype: np.ndarray
-        :raises: ValueError if the model has not been fitted.
+
+        :raises ValueError: if the model has not been fitted.
 
         """
         if self.right_asymptote is None or self.left_asymptote is None:
@@ -414,9 +405,7 @@ class GeneralizedLogisticModel:
 
         :param X: The input data matrix. Must be two dimensional even if there is only
             one predictor.
-        :type X: np.ndarray
         :param y: The observed output data.
-        :type y: np.ndarray
 
         """
         self.y = y
@@ -424,8 +413,11 @@ class GeneralizedLogisticModel:
 
     def fit(self, **kwargs) -> None:
         """
-        Fit the model to the data :param kwargs: Additional keyword arguments. These
-        include:
+        Fit the model to the data. This uses `scipy.optimize.curve_fit` to optimize the
+        model parameters. See
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.curve_fit.html
+
+        :param kwargs: Additional keyword arguments to pass to `curve_fit`.
 
         - **right_asymptote**: Initial guess for the upper asymptote.
             Defaults to 1.0.
@@ -433,7 +425,6 @@ class GeneralizedLogisticModel:
             Defaults to 0.0.
         - **coefficients**: Initial guess for the coefficients.
         - Any other kwargs are passed on to `scipy.optimize.curve_fit`.
-
         """
 
         assert (
@@ -482,10 +473,12 @@ class GeneralizedLogisticModel:
 
     def summary(self) -> None:
         """
-        Generate a summary of the model and diagnostic statistics.
+        Print a summary of the generalized logistic model.
 
         This method automatically performs LRT comparisons between the full model and
         models with one less predictor in each iteration.
+
+        :raises ValueError: if the model has not been fitted.
 
         """
         if self.X is None or self.y is None or self.coefficients is None:
@@ -598,7 +591,6 @@ class GeneralizedLogisticModel:
         self,
         plots_to_display: list[int] = [1, 2, 3, 4],
         interactor_diagnostic: bool = False,
-        **kwargs,
     ):
         """
         Diagnostic plots for the generalized logistic model.
@@ -612,9 +604,6 @@ class GeneralizedLogisticModel:
             plots to show.
         :param interactor_diagnostic: Boolean to include interactor diagnostic
             plot (default False).
-        :param kwargs: Additional keyword arguments to pass to the plotting functions.
-            Currently passes arguments to the `InteractorDiagnosticPlot` class.
-
         """
         if self.X is None or self.y is None or self.residuals is None:
             raise ValueError("Model must be fitted before plotting diagnostics.")
