@@ -89,3 +89,6 @@ nav:
       - interface/AbstractRecordsOnlyAPI.md
       - interface/Cache.md
       - interface/ParamsDict.md
+  - Utils:
+    - sigmoid: utils/sigmoid.md
+    - InteractorDiagnosticPlot: utils/InteractorDiagnosticPlot.md
