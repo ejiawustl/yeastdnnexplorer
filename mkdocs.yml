@@ -14,7 +14,12 @@ plugins:
 - search
 - autorefs
 - section-index
-- mknotebooks
+- mkdocs-jupyter:
+      remove_tag_config:
+          remove_input_tags:
+              - hide
+          remove_output_tags:
+              - hide
 - mkdocstrings:
     handlers:
           python:
