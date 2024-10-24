@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import tarfile
@@ -112,7 +113,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
                         )
 
                     # Wait for the specified polling interval before checking again
-                    time.sleep(polling_interval)
+                    await asyncio.sleep(polling_interval)
 
     async def _download_result(self, group_task_id: str) -> Any:
         """

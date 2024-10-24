@@ -1,9 +1,18 @@
 import logging
 
+from scipy.stats import binom
+
 from yeastdnnexplorer.interface import ExpressionAPI, PromoterSetSigAPI, RankResponseAPI
 
 
-async def retrieve_rank_response_df(
+# Function to calculate confidence interval for the random value
+def binom_ci(trials, random_prob, alpha=0.05):
+    lower_bound = binom.ppf(alpha / 2, trials, random_prob) / trials
+    upper_bound = binom.ppf(1 - alpha / 2, trials, random_prob) / trials
+    return lower_bound, upper_bound
+
+
+async def submit_rank_response_job(
     pss: PromoterSetSigAPI,
     expression: ExpressionAPI,
     rr: RankResponseAPI,
@@ -48,25 +57,25 @@ async def retrieve_rank_response_df(
 
     # iterate over the rows in merged_df and for each row, call set the rr.params and
     # call rr.read()
-    output_dict = {}
+    post_data = []
     for index, row in merged_df.iterrows():
-        rr.pop_params(None)
-        rr.push_params(
+
+        post_data.append(
             {
-                "promotersetsig_id": row["promotersetsig_id"],
-                "expression_id": row["expression_id"],
+                "promotersetsig_ids": [row["promotersetsig_id"]],
+                "expression_ids": [row["expression_id"]],
+                "rank_by_binding_effect": "true",
             }
         )
 
-        key = str(row["promotersetsig_id"]) + "_" + str(row["expression_id"])
+    group_id = await rr.submit(post_dict=post_data)
 
-        logger.info(f"Retrieving rank response data for key: {key}")
-        rr_res = await rr.read()
+    # rr_res = await rr.retrieve(group_id)
 
-        rr_metadata = rr_res.get("metadata")
+    # rr_metadata = rr_res.get("metadata")
 
-        rr_df = rr_res.get("data").get(key)
+    # rr_df = rr_res.get("data").get(rr_res.get("metadata").id[0])
 
-        output_dict.update({key: (rr_metadata, rr_df)})
+    # output_dict.update({key: (rr_metadata, rr_df)})
 
-    return output_dict
+    return group_id
