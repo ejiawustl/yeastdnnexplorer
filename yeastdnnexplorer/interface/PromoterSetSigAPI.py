@@ -40,6 +40,7 @@ class PromoterSetSigAPI(AbstractRecordsAndFilesAPI):
                 "data_usable",
                 "aggregated",
                 "condition",
+                "deduplicate",
             ],
         )
 
