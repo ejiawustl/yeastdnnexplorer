@@ -6,6 +6,7 @@ from .ExpressionAPI import ExpressionAPI
 from .ExpressionManualQCAPI import ExpressionManualQCAPI
 from .FileFormatAPI import FileFormatAPI
 from .GenomicFeatureAPI import GenomicFeatureAPI
+from .metric_arrays import metric_arrays
 from .PromoterSetAPI import PromoterSetAPI
 from .PromoterSetSigAPI import PromoterSetSigAPI
 from .RankResponseAPI import RankResponseAPI
@@ -20,6 +21,7 @@ __all__ = [
     "ExpressionManualQCAPI",
     "FileFormatAPI",
     "GenomicFeatureAPI",
+    "metric_arrays",
     "PromoterSetAPI",
     "PromoterSetSigAPI",
     "RankResponseAPI",
