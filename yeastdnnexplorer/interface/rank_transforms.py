@@ -46,7 +46,9 @@ def negative_log_transform_by_pvalue_and_enrichment(
         raise ValueError("`secondary_vector` must be a numeric")
 
     # Step 1: Rank by primary_column
-    primary_rank = rankdata(pvalue_vector, method="average")
+    # note that this will now always be an integer, unlike average which could return
+    # decimal values making adding the secondary rank more difficult
+    primary_rank = rankdata(pvalue_vector, method="min")
 
     # Step 2: Identify ties in primary_rank
     unique_ranks = np.unique(primary_rank)
@@ -68,11 +70,22 @@ def negative_log_transform_by_pvalue_and_enrichment(
                 -tie_secondary_values, method="average"
             )
 
+            # Calculate dynamic scale factor to ensure adjustments are < 1. Since the
+            # primary_rank is an integer, adding a number less than 1 will not affect
+            # rank relative to the other groups.
+            max_secondary_rank = np.max(secondary_rank_within_ties)
+            scale_factor = (
+                0.9 / max_secondary_rank
+            )  # Keep scale factor slightly below 1/max rank
+
             # multiple the secondary_rank_within_ties values by 0.1 and add this value
             # to the adjusted_primary_rank_values. This will rank the tied primary
             # values by the secondary values, but not affect the overall primary rank
             # outside of the tie group
-            adjusted_primary_rank[tie_indices] += secondary_rank_within_ties * 0.1
+            # think about this scale factor
+            adjusted_primary_rank[tie_indices] += (
+                secondary_rank_within_ties * scale_factor
+            )
 
     # Step 4: Final rank based on the adjusted primary ranks
     final_ranks = rankdata(adjusted_primary_rank, method="average")
