@@ -43,7 +43,8 @@ def test_all_ties_in_primary_column():
     pvalues = np.array([0.01, 0.01, 0.01, 0.01])
     enrichment = np.array([10.0, 20.0, 15.0, 5.0])
 
-    # With all pvalues tied, the ranking should depend solely on enrichment (higher is better)
+    # With all pvalues tied, the ranking should depend solely
+    # on enrichment (higher is better)
     expected_secondary_ranks = rankdata(-enrichment, method="average")
     expected_log_ranks = -1 * np.log10(expected_secondary_ranks) + np.log10(
         np.max(expected_secondary_ranks)

@@ -4,14 +4,14 @@ from scipy.stats import rankdata
 
 def shifted_negative_log_ranks(ranks: np.ndarray) -> np.ndarray:
     """
-    Transforms ranks to negative log10 values and shifts such that the lowest value is 0
+    Transforms ranks to negative log10 values and shifts such that the lowest value is
+    0.
 
     :param ranks: A vector of ranks
-
     :return np.ndarray: A vector of negative log10 transformed ranks shifted such that
         the lowest value is 0
-
     :raises ValueError: If the ranks are not numeric.
+
     """
     if not np.issubdtype(ranks.dtype, np.number):
         raise ValueError("`ranks` must be a numeric")
@@ -25,18 +25,16 @@ def negative_log_transform_by_pvalue_and_enrichment(
 ) -> np.ndarray:
     """
     Ranks data by primary_column, breaking ties based on secondary_column. The expected
-        primary and secondary columns are 'pvalue' and 'enrichment', respectively. Then
-        the ranks are transformed to negative log10 values and shifted such that the
-        lowest value is 0 and the highest value is log10(min_rank).
+    primary and secondary columns are 'pvalue' and 'enrichment', respectively. Then the
+    ranks are transformed to negative log10 values and shifted such that the lowest
+    value is 0 and the highest value is log10(min_rank).
 
     :param pvalue_vector: A vector of pvalues
-    :param enrichment_vector: A vector of enrichment values corresponding to the
-        pvalues
-
+    :param enrichment_vector: A vector of enrichment values corresponding to the pvalues
     :return np.ndarray: A vector of negative log10 transformed ranks shifted such that
         the lowest value is 0 and the highest value is log10(min_rank)
-
     :raises ValueError: If the primary or secondary column is not numeric.
+
     """
 
     # Check if primary and secondary columns are numeric
