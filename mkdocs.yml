@@ -50,6 +50,7 @@ nav:
   - Testing Model Metrics: tutorials/testing_model_metrics.ipynb
   - Visualizing and Testing Data Generation Methods: tutorials/visualizing_and_testing_data_generation_methods.ipynb
   - Generalized Logistic Models: tutorials/generalized_logistic_models.ipynb
+  - LassoCV: tutorials/lassoCV.ipynb
 - API:
   - Data Loaders:
     - Synthetic Data Loader: data_loaders/synthetic_data_loader.md
@@ -89,6 +90,9 @@ nav:
       - interface/AbstractRecordsOnlyAPI.md
       - interface/Cache.md
       - interface/ParamsDict.md
+    - Data Transformers:
+      - metric_arrays: interface/metric_arrays.md
+      - rank_transforms: interface/rank_transforms.md
   - Utils:
     - sigmoid: utils/sigmoid.md
     - InteractorDiagnosticPlot: utils/InteractorDiagnosticPlot.md

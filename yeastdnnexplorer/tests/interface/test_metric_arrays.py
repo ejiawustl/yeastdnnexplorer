@@ -157,10 +157,11 @@ def test_metric_arrays_duplicate_rows_without_dedup_func():
     metrics_dict = {"metric1": None}  # No deduplication function provided
 
     # Expect a ValueError due to duplicate rows without deduplication function
+    #
     with pytest.raises(
         ValueError, match="Duplicate entries found for metric 'metric1'"
     ):
-        metric_arrays(res_dict, metrics_dict)
+        metric_arrays(res_dict, metrics_dict)  # type: ignore
 
 
 def test_metric_arrays_deduplication_function():

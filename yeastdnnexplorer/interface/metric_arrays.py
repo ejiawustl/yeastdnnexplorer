@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Optional, Union
+from collections.abc import Callable
 
 import pandas as pd
 
@@ -7,11 +7,11 @@ logger = logging.getLogger(__name__)
 
 
 def metric_arrays(
-    res_dict: dict[str, Union[pd.DataFrame, dict[str, pd.DataFrame]]],
+    res_dict: dict[str, pd.DataFrame | dict[str, pd.DataFrame]],
     metrics_dict: dict[str, Callable],
     rownames: str = "target_symbol",
     colnames: str = "regulator_symbol",
-    row_dedup_func: Optional[Callable] = None,
+    row_dedup_func: Callable | None = None,
     drop_incomplete_rows: bool = True,
 ) -> dict[str, pd.DataFrame]:
     """
@@ -40,6 +40,7 @@ def metric_arrays(
     :raises ValueError: If the `colnames` is not in the res_dict metadata
     :raises ValueError: If the `rownames` is not in the res_dict data
     :raises ValueError: If the metrics are not in the data dictionary
+
     """
 
     # Check required keys
@@ -53,10 +54,11 @@ def metric_arrays(
         raise ValueError("metadata must have an 'id' column")
 
     # Check for missing keys in 'data'
-    missing_keys = [k for k in metadata["id"] if k not in res_dict["data"]]
+    missing_keys = [k for k in metadata["id"] if str(k) not in res_dict["data"]]
     if missing_keys:
         raise KeyError(
-            f"Data dictionary must have the same keys as the 'id' column. Missing keys: {missing_keys}"
+            f"Data dictionary must have the same keys as the 'id' "
+            f"column. Missing keys: {missing_keys}"
         )
 
     # Ensure all data dictionary values are DataFrames
@@ -86,8 +88,13 @@ def metric_arrays(
     }
 
     # Populate DataFrames with metric values
+    info_msgs = set()
     for _, row in metadata.iterrows():
-        data = res_dict["data"][row["id"]]
+        try:
+            data = res_dict["data"][row["id"]]
+        except KeyError:
+            info_msgs.add("casting `id` to str to extract data from res_dict['data']")
+            data = res_dict["data"][str(row["id"])]
 
         for metric, row_dedup_func in metrics_dict.items():
             # Filter data to include only the rownames and metric columns
@@ -109,14 +116,30 @@ def metric_arrays(
                 # Ensure no duplicates exist if no deduplication function is provided
                 if metric_data[rownames].duplicated().any():
                     raise ValueError(
-                        f"Duplicate entries found for metric '{metric}' in id '{row['id']}' without dedup_func"
+                        f"Duplicate entries found for metric '{metric}' "
+                        f"in id '{row['id']}' without dedup_func"
                     )
 
+            # test if row[colnames] is already in output_dict[metric]. If it is, add a
+            # replicate suffix and try again, Continue doing this until the column name
+            # is unique
+            colname = row[colnames]
+            suffix = 2
+            while colname in output_dict[metric].columns:
+                colname = f"{row[colnames]}_rep{suffix}"
+                suffix += 1
+            if suffix > 2:
+                info_msgs.add(
+                    f"Column name '{row[colnames]}' already exists in "
+                    f"output DataFrame for metric '{metric}'. "
+                    f"Renaming to '{colname}'"
+                )
             # Join metric data with output DataFrame for the metric
             output_dict[metric] = output_dict[metric].join(
-                metric_data.set_index(rownames).rename(columns={metric: row[colnames]}),
+                metric_data.set_index(rownames).rename(columns={metric: colname}),
                 how="left",
             )
+    logger.info("; ".join(info_msgs))
 
     # Drop incomplete rows and columns if drop_incomplete_rows is True
     if drop_incomplete_rows:
@@ -131,7 +154,8 @@ def metric_arrays(
 
             if dropped_rows > 0 or dropped_columns > 0:
                 logger.warning(
-                    f"{dropped_rows} rows and {dropped_columns} columns with incomplete "
+                    f"{dropped_rows} rows and {dropped_columns} "
+                    f"columns with incomplete "
                     f"records were dropped for metric '{metric}'."
                 )
 
