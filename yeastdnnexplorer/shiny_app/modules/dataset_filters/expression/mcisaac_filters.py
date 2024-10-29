@@ -84,9 +84,7 @@ def mcisaac_filter_ui(
 
 
 @module.server
-def mcisaac_filter_server(
-    input: Inputs, output: Outputs, session: Session
-) -> tuple[
+def mcisaac_filter_server(input: Inputs, output: Outputs, session: Session) -> tuple[
     reactive.Value[list[str]],
     reactive.Value[str],
     reactive.Value[list[str]],

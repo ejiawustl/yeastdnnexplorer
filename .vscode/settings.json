@@ -3,13 +3,16 @@
     "cSpell.words": [
         "aiohttp",
         "arange",
+        "astype",
         "dtype",
+        "issubdtype",
         "ndarray",
         "ndim",
         "overexpression",
         "pval",
         "pvalues",
         "randperm",
+        "rankdata",
         "yeastdnnexplorer"
     ],
     "[markdown]": {
