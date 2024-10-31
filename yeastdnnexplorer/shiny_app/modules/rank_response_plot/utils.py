@@ -68,7 +68,7 @@ async def submit_rank_response_job(
             }
         )
 
-    group_id = await rr.submit(post_dict=post_data)
+    group_id = await rr.submit(post_dict=post_data)  # type: ignore
 
     # rr_res = await rr.retrieve(group_id)
 

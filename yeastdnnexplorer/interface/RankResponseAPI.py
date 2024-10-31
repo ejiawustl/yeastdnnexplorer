@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 import pandas as pd
-from requests import Response, post
+from requests import Response, post  # type: ignore
 from requests_toolbelt import MultipartEncoder
 
 from yeastdnnexplorer.interface.AbstractRecordsAndFilesAPI import (
@@ -203,6 +203,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
 
         :raises ValueError: If a DataFrame is not provided in the keyword arguments.
         :raises TypeError: If the DataFrame provided is not a pandas DataFrame.
+
         """
         # ensure that the url ends in a slash
         rankresponse_url = f"{self.url.rstrip('/')}/"
