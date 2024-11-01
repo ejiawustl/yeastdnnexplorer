@@ -1,7 +1,6 @@
 import logging
 import re
 import warnings
-from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,11 +21,12 @@ def generate_modeling_data(
     response_df: pd.DataFrame,
     predictors_df: pd.DataFrame,
     drop_intercept: bool = True,
-    formula: Union[str, None] = None,
-    quantile_threshold: Union[float, None] = None,
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    formula: str | None = None,
+    quantile_threshold: float | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Generate the response and predictor data, optionally filtering to the top x quantile.
+    Generate the response and predictor data, optionally filtering to the top x
+    quantile.
 
     :param colname: The column name to use as the response variable. This column name
         should exist in `response_df` and `predictors_df`.
@@ -46,8 +46,11 @@ def generate_modeling_data(
 
     :return: A tuple of the response variable DataFrame and the predictors DataFrame.
 
-    :raises ValueError: If `colname` does not exist in `predictors_df` or `response_df`.
-    :raises ValueError: If any columns in `response_df` are not present in `predictors_df`.
+    :raises ValueError: If `colname` does not exist in `predictors_df`
+        or `response_df`.
+    :raises ValueError: If any columns in `response_df` are not present
+        in `predictors_df`.
+
     """
     # Validate input
     if colname not in response_df.columns:
@@ -126,11 +129,12 @@ def stratification_classification(
     bins: list = [0, 8, 64, 512, np.inf],
 ) -> np.ndarray:
     """
-    Bin the binding and perturbation data and create groups for stratified k folds
+    Bin the binding and perturbation data and create groups for stratified k folds.
 
     :param binding_series: The binding vector to use for stratification
     :param perturbation_series: The perturbation vector to use for stratification
-    :param bins: The bins to use for stratification. The default is [0, 8, 64, 512, np.inf]
+    :param bins: The bins to use for stratification.
+        The default is [0, 8, 64, 512, np.inf]
 
     :return: A numpy array of the stratified classes
 
@@ -139,6 +143,7 @@ def stratification_classification(
     :raises ValueError: If the length of `bins` is less than 2
     :raises ValueError: If `binding_series` and `perturbation_series` are not numeric
         pd.Series
+
     """
     # Validate input
     if len(binding_series) != len(perturbation_series):
@@ -180,7 +185,7 @@ def stratified_cv_modeling(
     y: pd.DataFrame,
     X: pd.DataFrame,
     estimator: BaseEstimator = LassoCV(),
-    sample_weight: Union[np.ndarray, None] = None,
+    sample_weight: np.ndarray | None = None,
 ) -> BaseEstimator:
     """
     This conducts the LassoCV modeling. The name `stratified_cv_modeling` is a misnomer.
@@ -201,6 +206,7 @@ def stratified_cv_modeling(
     :raises ValueError: if X is not a DataFrame with 1 or more columns, or the number
         of rows in y does not match the number of rows in X
     :raises ValueError: If the estimator does not have a `cv` attribute
+
     """
     # Validate data
     if not isinstance(y, pd.DataFrame):
@@ -250,10 +256,10 @@ def stratified_cv_modeling(
 
 def bootstrap_stratified_cv_modeling(
     n_bootstraps: int = 1000,
-    ci_percentiles: List[float] = [95.0, 99.0],
+    ci_percentiles: list[float] = [95.0, 99.0],
     use_sample_weight_in_cv: bool = False,
     **kwargs,
-) -> Tuple[Dict[str, Dict[str, Tuple[float, float]]], pd.DataFrame, List[float]]:
+) -> tuple[dict[str, dict[str, tuple[float, float]]], pd.DataFrame, list[float]]:
     """
     Perform bootstrap resampling to generate confidence intervals for
     Lasso coefficients. See 6.2 in https://hastie.su.domains/StatLearnSparsity/ -- this
@@ -273,7 +279,8 @@ def bootstrap_stratified_cv_modeling(
           where keys are CI levels (e.g., "95.0") and values are dictionaries
           mapping each coefficient to its lower and upper bounds, with columns named
           according to the predictors in `X`.
-        - The second element is a DataFrame where each row represents a bootstrap sample,
+        - The second element is a DataFrame where each row represents a
+        bootstrap sample,
           and columns correspond to the predictor variables from `X`.
         - The third element is a list of alpha values from each bootstrap iteration.
 
@@ -347,7 +354,7 @@ def bootstrap_stratified_cv_modeling(
 
 def examine_bootstrap_coefficients(
     lasso_model_output, ci_level: str = "95.0", threshold: float = 0.0
-) -> Tuple[Figure, Dict[str, Tuple[float, float]]]:
+) -> tuple[Figure, dict[str, tuple[float, float]]]:
     """
     Generate a plot, and output the set of coefficients that meet the ci_level and
     threshold criteria.
@@ -427,6 +434,7 @@ def examine_bootstrap_coefficients(
         - The created Matplotlib Figure for further customization.
         - A dictionary where the keys are the significant coefficients and the values
         are the confidence intervals specified in the `ci_level` parameter.
+
     """
     # Unpack lasso_model_output
     ci_dict, bootstrap_coefs_df, _ = lasso_model_output

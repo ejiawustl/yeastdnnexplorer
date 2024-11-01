@@ -28,6 +28,7 @@ def configure_logging(
 
     :param log_level: The logging level to set.
     :return: A tuple of the main and shiny loggers.
+
     """
     # add a timestamp to the log file name
     log_file = f"yeastdnnexplorer_{time.strftime('%Y%m%d-%H%M%S')}.log"
@@ -45,6 +46,7 @@ def run_shiny(args: argparse.Namespace) -> None:
     Run the shiny app with the specified arguments.
 
     :param args: The parsed command-line arguments.
+
     """
     kwargs = {}
     if args.debug:
@@ -70,6 +72,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     Run LassoCV with bootstrap resampling on a specified transcription factor.
 
     :param args: The parsed command-line arguments.
+
     """
     output_dirpath = os.path.join(args.output_dir, args.perturbed_tf)
     if os.path.exists(output_dirpath):
@@ -202,7 +205,7 @@ def main() -> None:
         choices=["console", "file"],
         help="Set the logging handler",
     )
-    formatter.add_arguments([log_level_argument])
+    formatter.add_arguments([log_level_argument, log_handler_argument])
 
     # Define subparsers for different commands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
@@ -245,35 +248,38 @@ def main() -> None:
         "--response_file",
         type=str,
         required=True,
-        help="Path to the response CSV file. NOTE: the index column must be present and the "
-        "first column in the CSV. Additionally, the index values should be either symbols "
-        "or locus tags, matching the index values in both response and predictors files. "
-        "The perturbed gene will be removed from the model data only if column names in "
-        "response data match the index format (e.g., symbol or locus tag).",
+        help="Path to the response CSV file. NOTE: the index column must be "
+        "present and the first column in the CSV. Additionally, the index values "
+        "should be either symbols or locus tags, matching the index values in both "
+        "response and predictors files. The perturbed gene will be removed from "
+        "the model data only if column names in response data match the index "
+        "format (e.g., symbol or locus tag).",
     )
     input_group.add_argument(
         "--predictors_file",
         type=str,
         required=True,
-        help="Path to the predictors CSV file. NOTE: the index column must be present and the "
-        "first column in the CSV. Additionally, the index values should be either symbols "
-        "or locus tags, matching the index values in both response and predictors files. "
-        "The perturbed gene will be removed from the model data only if column names in "
-        "predictors data match the index format (e.g., symbol or locus tag).",
+        help="Path to the predictors CSV file. NOTE: the index column must be "
+        "present and the first column in the CSV. Additionally, the index values "
+        "should be either symbols or locus tags, matching the index values in both "
+        "response and predictors files. The perturbed gene will be removed from the "
+        "model data only if column names in predictors data match the index "
+        "format (e.g., symbol or locus tag).",
     )
     input_group.add_argument(
         "--perturbed_tf",
         type=str,
-        help="A response variable column to use. The data indices should be in the same format "
-        "(e.g., symbol or locus tag) so that the perturbed gene can be removed from the data "
-        "prior to modeling.",
+        help="A response variable column to use. The data indices should be in "
+        "the same format (e.g., symbol or locus tag) so that the perturbed gene can "
+        "be removed from the data prior to modeling.",
     )
     input_group.add_argument(
         "--data_quantile",
         type=float,
-        required=None,
-        help="The quantile threshold for filtering the data based on the perturbed binding data. "
-        "For example, 0.1 would select the top 10 percent. If omitted, all data will be used.",
+        default=None,
+        help="The quantile threshold for filtering the data based on the "
+        "perturbed binding data. For example, 0.1 would select the top 10 percent. "
+        "If omitted, all data will be used.",
     )
     input_group.add_argument(
         "--n_bootstraps",
