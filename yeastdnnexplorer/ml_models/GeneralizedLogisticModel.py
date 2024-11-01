@@ -13,7 +13,7 @@ from tabulate import tabulate  # type: ignore
 from yeastdnnexplorer.utils.InteractorDiagnosticPlot import InteractorDiagnosticPlot
 from yeastdnnexplorer.utils.sigmoid import sigmoid
 
-logger = logging.getLogger("general")
+logger = logging.getLogger("main")
 
 
 class GeneralizedLogisticModel:
