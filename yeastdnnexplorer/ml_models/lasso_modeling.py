@@ -57,10 +57,6 @@ def generate_modeling_data(
         raise ValueError(
             f"The column {colname} does not exist in the response DataFrame."
         )
-    if colname not in predictors_df.columns:
-        raise ValueError(
-            f"The column {colname} does not exist in the predictors DataFrame."
-        )
 
     # Ensure all columns in response_df are in predictors_df (excluding rep patterns)
     response_columns = response_df.columns.str.replace(r"_rep\d+", "", regex=True)
