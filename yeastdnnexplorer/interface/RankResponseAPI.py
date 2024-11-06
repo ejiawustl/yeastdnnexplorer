@@ -1,13 +1,15 @@
+import asyncio
 import json
 import os
 import tarfile
 import tempfile
 import time
-from collections.abc import Callable
 from typing import Any
 
 import aiohttp
 import pandas as pd
+from requests import Response, post  # type: ignore
+from requests_toolbelt import MultipartEncoder
 
 from yeastdnnexplorer.interface.AbstractRecordsAndFilesAPI import (
     AbstractRecordsAndFilesAPI,
@@ -32,8 +34,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
 
         """
         super().__init__(
-            url=kwargs.pop("url", os.getenv("PROMOTERSETSIG_URL", "")),
-            export_files_url_suffix="rankresponse",
+            url=kwargs.pop("url", os.getenv("RANKRESPONSE_URL", "")),
             **kwargs,
         )
 
@@ -43,7 +44,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
         **kwargs,
     ) -> Any:
         # make a post request with the post_dict to rankresponse_url
-        rankresponse_url = f"{self.url.rstrip('/')}/rankresponse/"
+        rankresponse_url = f"{self.url.rstrip('/')}/submit/"
         self.logger.debug("rankresponse_url: %s", rankresponse_url)
 
         async with aiohttp.ClientSession() as session:
@@ -81,7 +82,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
         start_time = time.time()
 
         # Task status URL
-        status_url = f"{self.url.rstrip('/')}/rankresponse_task_status/"
+        status_url = f"{self.url.rstrip('/')}/status/"
 
         while True:
             async with aiohttp.ClientSession() as session:
@@ -112,7 +113,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
                         )
 
                     # Wait for the specified polling interval before checking again
-                    time.sleep(polling_interval)
+                    await asyncio.sleep(polling_interval)
 
     async def _download_result(self, group_task_id: str) -> Any:
         """
@@ -122,7 +123,7 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
         :return: Extracted metadata and data from the tarball.
 
         """
-        download_url = f"{self.url.rstrip('/')}/rankresponse_get_data/"
+        download_url = f"{self.url.rstrip('/')}/retrieve_task/"
 
         async with aiohttp.ClientSession() as session:
             async with session.get(
@@ -189,20 +190,51 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
                     data[rr_id] = pd.read_csv(f, compression="gzip")
         return {"metadata": metadata_df, "data": data}
 
-    async def read(
-        self,
-        callback: Callable[
-            [pd.DataFrame, dict[str, Any] | None, Any], Any
-        ] = lambda metadata, data, cache, **kwargs: (
-            {"metadata": metadata, "data": data}
-        ),
-        retrieve_files: bool = False,
-        **kwargs,
-    ) -> Any:
-        raise NotImplementedError("The RankResponseAPI does not support read.")
+    def create(self, data: dict[str, Any], **kwargs) -> Response:
+        """
+        Create a new RankResponse record by uploading a gzipped CSV file.
 
-    def create(self, data: dict[str, Any], **kwargs) -> Any:
-        raise NotImplementedError("The RankResponseAPI does not support create.")
+        :param data: This should be the fields in the RankREsponse model, eg
+            "promotersetsig_id", "expression_id" and "parameters".
+        :param kwargs: Additional parameters to pass to the post. This must include a
+            DataFrame to upload as a CSV file with the keyword `df`, eg `df=my_df`.
+
+        :return: The result of the post request.
+
+        :raises ValueError: If a DataFrame is not provided in the keyword arguments.
+        :raises TypeError: If the DataFrame provided is not a pandas DataFrame.
+
+        """
+        # ensure that the url ends in a slash
+        rankresponse_url = f"{self.url.rstrip('/')}/"
+        df = kwargs.pop("df", None)
+
+        if df is None:
+            raise ValueError(
+                "A DataFrame must be provided to create "
+                "a RankResponse via keyword `df`"
+            )
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError(
+                f"Expected a DataFrame for keyword `df`, got {type(df).__name__}"
+            )
+
+        # Create a temporary gzipped CSV file from the DataFrame
+        with tempfile.NamedTemporaryFile(suffix=".csv.gz") as temp_file:
+            df.to_csv(temp_file.name, compression="gzip", index=False)
+
+            # Prepare the file and metadata for upload
+            with open(temp_file.name, "rb") as file:
+                multipart_data = MultipartEncoder(
+                    fields={**data, "file": (temp_file.name, file, "application/gzip")}
+                )
+                headers = {**self.header, "Content-Type": multipart_data.content_type}
+
+                # Send the POST request with custom encoded multipart data
+                response = post(rankresponse_url, headers=headers, data=multipart_data)
+
+        response.raise_for_status()
+        return response
 
     def update(self, df: pd.DataFrame, **kwargs) -> Any:
         raise NotImplementedError("The RankResponseAPI does not support update.")

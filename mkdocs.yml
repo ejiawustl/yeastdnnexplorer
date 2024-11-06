@@ -61,6 +61,7 @@ nav:
     - ml_models/metrics_smse.md
     - ml_models/simple_model.md
     - ml_models/GeneralizedLogisticModel.md
+    - ml_models/lasso_modeling.md
   - Probability Models:
     - probability_models/default_perturbation_effect_adjustment_function.md
     - probability_models/GenePopulation.md
