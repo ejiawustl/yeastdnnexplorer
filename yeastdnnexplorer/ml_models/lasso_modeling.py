@@ -59,6 +59,9 @@ def generate_modeling_data(
         )
 
     # Ensure all columns in response_df are in predictors_df (excluding rep patterns)
+    # TODO: this is a hack. We are assuming that the response column might have
+    # a _rep\d+, removing it, and using it as the column name. Somehow this needs to
+    # be handled in a more robust way. See the other TODOS on this
     response_columns = response_df.columns.str.replace(r"_rep\d+", "", regex=True)
     missing_cols = response_columns.difference(predictors_df.columns)
     if not missing_cols.empty:
@@ -91,7 +94,8 @@ def generate_modeling_data(
 
     # remove the _rep\d+ pattern from the response colname -- perturbation data should
     # not have replicates.
-    # TODO: this needs to be handled more transparently
+    # TODO: this needs to be handled more transparently. See the other TODOs on
+    # rep\d
     perturbed_tf = re.sub(r"_rep\d+", "", colname)
 
     # Apply quantile filtering if quantile_threshold is specified
@@ -223,14 +227,17 @@ def stratified_cv_modeling(
         raise ValueError("The estimator must support a `cv` parameter.")
 
     # Step 5: Generate bins for stratified k-fold cross-validation
-    response_colname = re.sub(r"_rep\d+", "", y.columns[0])
-    if response_colname not in X.columns:
+    # TODO: This is a hack. We are assuming that the response column might have
+    # a _rep\d+, removing it, and using it as the column name. Somehow this needs to
+    # be handled in a more robust way.
+    response_colname_no_rep = re.sub(r"_rep\d+", "", y.columns[0])
+    if response_colname_no_rep not in X.columns:
         raise ValueError(
-            f"The response column {response_colname} does not exist in the predictors. "
+            f"The response column {response_colname_no_rep} does not exist in the predictors. "
             "This is currently expected in order to create the stratified folds. "
             "If different behavior is desired, the code will need to be modified."
         )
-    classes = stratification_classification(X[response_colname], y[response_colname])
+    classes = stratification_classification(X[response_colname_no_rep], y.squeeze())
 
     # Step 6: Initialize StratifiedKFold for stratified splits
     logger.debug("Generating stratified k-fold splits")
