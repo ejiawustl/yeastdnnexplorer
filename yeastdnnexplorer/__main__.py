@@ -274,6 +274,14 @@ def main() -> None:
         "be removed from the data prior to modeling.",
     )
     input_group.add_argument(
+        "--formula",
+        type=str,
+        default=None,
+        help="The formula to use for modeling. If omitted, a formula with all of "
+        "the interactors will be used, eg "
+        "perturbed_tf_lrr ~ perturbed_tf + perturbed_tf:other_tf1 + ...",
+    )
+    input_group.add_argument(
         "--data_quantile",
         type=float,
         default=None,
