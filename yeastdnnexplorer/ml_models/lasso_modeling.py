@@ -89,13 +89,17 @@ def generate_modeling_data(
     # log the number of rows in the merged dataframe
     logger.info(f"Number of rows in the merged response/predictors: {tmp_df.shape[0]}")
 
+    # remove the _rep\d+ pattern from the response colname -- perturbation data should
+    # not have replicates.
+    # TODO: this needs to be handled more transparently
+    perturbed_tf = re.sub(r"_rep\d+", "", colname)
+
     # Apply quantile filtering if quantile_threshold is specified
     if quantile_threshold is not None:
-        quantile_value = tmp_df[colname].quantile(1 - quantile_threshold)
-        tmp_df = tmp_df[tmp_df[colname] >= quantile_value]
+        quantile_value = tmp_df[perturbed_tf].quantile(1 - quantile_threshold)
+        tmp_df = tmp_df[tmp_df[perturbed_tf] >= quantile_value]
 
     # Step 3: Define the interaction formula
-    perturbed_tf = re.sub(r"_rep\d+", "", colname)
     if formula is None:
         interaction_terms = " + ".join(
             [

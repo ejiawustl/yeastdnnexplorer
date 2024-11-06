@@ -100,6 +100,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         predictors_df=predictors_df,
         drop_intercept=True,
         quantile_threshold=args.data_quantile,
+        formula=args.formula,
     )
 
     # Configure and fit LassoCV estimator
