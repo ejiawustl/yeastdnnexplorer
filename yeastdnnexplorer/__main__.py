@@ -77,7 +77,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     output_dirpath = os.path.join(args.output_dir, args.perturbed_tf)
     if os.path.exists(output_dirpath):
         raise FileExistsError(
-            f"File {args.output_dir} already exists. "
+            f"File {output_dirpath} already exists. "
             "Please specify a different `output_dir`."
         )
     else:

@@ -261,12 +261,12 @@ def stratified_cv_modeling(
     logger.debug("Fitting the model")
     if drop_columns_before_modeling:
         logger.info(f"Dropping columns {drop_columns_before_modeling} before modeling")
-    model_x = (
-        X.drop(drop_columns_before_modeling, axis=1)
-        if drop_columns_before_modeling
-        else X
+
+    model.fit(
+        X.drop(drop_columns_before_modeling, axis=1),
+        y.values.ravel(),
+        sample_weight=sample_weight,
     )
-    model.fit(model_x, y.values.ravel(), sample_weight=sample_weight)
 
     return model
 
@@ -356,7 +356,9 @@ def bootstrap_stratified_cv_modeling(
         bootstrap_coefs.append(model_i.coef_)
 
     # Convert coefficients list to a DataFrame with column names from X
-    bootstrap_coefs_df = pd.DataFrame(bootstrap_coefs, columns=X.columns)
+    bootstrap_coefs_df = pd.DataFrame(
+        bootstrap_coefs, columns=X.drop(kwargs["drop_columns_before_modeling"], axis=1)
+    )
 
     # Compute confidence intervals
     ci_dict = {
