@@ -102,6 +102,10 @@ def generate_modeling_data(
 
     # Apply quantile filtering if quantile_threshold is specified
     if quantile_threshold is not None:
+        logger.info(
+            "Subsetting data to the top "
+            f"{quantile_threshold} quantile by {perturbed_tf}"
+        )
         quantile_value = tmp_df[perturbed_tf].quantile(1 - quantile_threshold)
         tmp_df = tmp_df[tmp_df[perturbed_tf] >= quantile_value]
 
