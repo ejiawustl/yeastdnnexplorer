@@ -357,7 +357,8 @@ def bootstrap_stratified_cv_modeling(
 
     # Convert coefficients list to a DataFrame with column names from X
     bootstrap_coefs_df = pd.DataFrame(
-        bootstrap_coefs, columns=X.drop(kwargs["drop_columns_before_modeling"], axis=1)
+        bootstrap_coefs,
+        columns=X.drop(kwargs.get("drop_columns_before_modeling", []), axis=1).columns,
     )
 
     # Compute confidence intervals
