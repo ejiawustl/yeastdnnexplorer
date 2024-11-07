@@ -330,24 +330,13 @@ def bootstrap_stratified_cv_modeling(
             "passed to bootstrap_cv_modeling()."
         )
 
-    # note: do this here and not in stratified_cv_modeling so that the operation
-    # is only performed/logged once
-    drop_columns_before_modeling = kwargs.get("drop_columns_before_modeling", [])
-    if drop_columns_before_modeling:
-        logger.info(
-            f"Dropping columns {drop_columns_before_modeling} before bootstrap modeling"
-        )
-        model_x = X.drop(drop_columns_before_modeling, axis=1)
-    else:
-        model_x = X
-
     bootstrap_coefs = []
     alpha_list = []
 
     # Bootstrap iterations
     for _ in range(n_bootstraps):
         Y_resampled = resample(y, replace=True)
-        X_resampled = model_x.loc[Y_resampled.index]
+        X_resampled = X.loc[Y_resampled.index]
 
         weights = None
         if use_sample_weight_in_cv:
@@ -361,6 +350,7 @@ def bootstrap_stratified_cv_modeling(
             X_resampled,
             estimator,
             sample_weight=weights,
+            drop_columns_before_modeling=kwargs.get("drop_columns_before_modeling", []),
         )
         alpha_list.append(model_i.alpha_)
         bootstrap_coefs.append(model_i.coef_)
