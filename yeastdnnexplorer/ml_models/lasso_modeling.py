@@ -190,6 +190,7 @@ def stratified_cv_modeling(
     X: pd.DataFrame,
     estimator: BaseEstimator = LassoCV(),
     sample_weight: np.ndarray | None = None,
+    drop_columns_before_modeling: list = [],
 ) -> BaseEstimator:
     """
     This conducts the LassoCV modeling. The name `stratified_cv_modeling` is a misnomer.
@@ -256,7 +257,12 @@ def stratified_cv_modeling(
 
     # Step 7: Fit the model using the custom cross-validation folds
     logger.debug("Fitting the model")
-    model.fit(X, y.values.ravel(), sample_weight=sample_weight)
+    model_x = (
+        X.drop(drop_columns_before_modeling, axis=1)
+        if drop_columns_before_modeling
+        else X
+    )
+    model.fit(model_x, y.values.ravel(), sample_weight=sample_weight)
 
     return model
 
@@ -336,7 +342,11 @@ def bootstrap_stratified_cv_modeling(
             weights = sample_counts / len(y)
 
         model_i = stratified_cv_modeling(
-            Y_resampled, X_resampled, estimator, sample_weight=weights
+            Y_resampled,
+            X_resampled,
+            estimator,
+            sample_weight=weights,
+            drop_columns_before_modeling=kwargs.get("drop_columns_before_modeling", []),
         )
         alpha_list.append(model_i.alpha_)
         bootstrap_coefs.append(model_i.coef_)
