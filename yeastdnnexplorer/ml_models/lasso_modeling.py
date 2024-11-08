@@ -240,9 +240,10 @@ def stratified_cv_modeling(
     response_colname_no_rep = re.sub(r"_rep\d+", "", y.columns[0])
     if response_colname_no_rep not in X.columns:
         raise ValueError(
-            f"The response column {response_colname_no_rep} does not exist in the predictors. "
-            "This is currently expected in order to create the stratified folds. "
-            "If different behavior is desired, the code will need to be modified."
+            f"The response column {response_colname_no_rep} does not exist "
+            "in the predictors. This is currently expected in order to create the "
+            "stratified folds. If different behavior is desired, the code will need "
+            "to be modified."
         )
     classes = stratification_classification(X[response_colname_no_rep], y.squeeze())
 
