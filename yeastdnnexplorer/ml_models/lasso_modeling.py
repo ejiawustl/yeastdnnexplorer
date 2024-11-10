@@ -59,6 +59,9 @@ def generate_modeling_data(
         )
 
     # Ensure all columns in response_df are in predictors_df (excluding rep patterns)
+    # TODO: this is a hack. We are assuming that the response column might have
+    # a _rep\d+, removing it, and using it as the column name. Somehow this needs to
+    # be handled in a more robust way. See the other TODOS on this
     response_columns = response_df.columns.str.replace(r"_rep\d+", "", regex=True)
     missing_cols = response_columns.difference(predictors_df.columns)
     if not missing_cols.empty:
@@ -83,19 +86,30 @@ def generate_modeling_data(
             "not be removed from the modeling data"
         )
     else:
-        logger.info(f"Dropping {colname} from the modeling data")
+        logger.info(
+            f"Removing {colname} from the data rows (removing the perturbed TF)"
+        )
         tmp_df = tmp_df.drop(colname)
 
     # log the number of rows in the merged dataframe
     logger.info(f"Number of rows in the merged response/predictors: {tmp_df.shape[0]}")
 
+    # remove the _rep\d+ pattern from the response colname -- perturbation data should
+    # not have replicates.
+    # TODO: this needs to be handled more transparently. See the other TODOs on
+    # rep\d
+    perturbed_tf = re.sub(r"_rep\d+", "", colname)
+
     # Apply quantile filtering if quantile_threshold is specified
     if quantile_threshold is not None:
-        quantile_value = tmp_df[colname].quantile(1 - quantile_threshold)
-        tmp_df = tmp_df[tmp_df[colname] >= quantile_value]
+        quantile_value = tmp_df[perturbed_tf].quantile(1 - quantile_threshold)
+        tmp_df = tmp_df[tmp_df[perturbed_tf] >= quantile_value]
+        logger.info(
+            f"Number of rows after filtering by the top "
+            f"{quantile_threshold} of {perturbed_tf}: {tmp_df.shape[0]}"
+        )
 
     # Step 3: Define the interaction formula
-    perturbed_tf = re.sub(r"_rep\d+", "", colname)
     if formula is None:
         interaction_terms = " + ".join(
             [
@@ -182,6 +196,7 @@ def stratified_cv_modeling(
     X: pd.DataFrame,
     estimator: BaseEstimator = LassoCV(),
     sample_weight: np.ndarray | None = None,
+    drop_columns_before_modeling: list = [],
 ) -> BaseEstimator:
     """
     This conducts the LassoCV modeling. The name `stratified_cv_modeling` is a misnomer.
@@ -219,14 +234,18 @@ def stratified_cv_modeling(
         raise ValueError("The estimator must support a `cv` parameter.")
 
     # Step 5: Generate bins for stratified k-fold cross-validation
-    response_colname = re.sub(r"_rep\d+", "", y.columns[0])
-    if response_colname not in X.columns:
+    # TODO: This is a hack. We are assuming that the response column might have
+    # a _rep\d+, removing it, and using it as the column name. Somehow this needs to
+    # be handled in a more robust way.
+    response_colname_no_rep = re.sub(r"_rep\d+", "", y.columns[0])
+    if response_colname_no_rep not in X.columns:
         raise ValueError(
-            f"The response column {response_colname} does not exist in the predictors. "
-            "This is currently expected in order to create the stratified folds. "
-            "If different behavior is desired, the code will need to be modified."
+            f"The response column {response_colname_no_rep} does not exist "
+            "in the predictors. This is currently expected in order to create the "
+            "stratified folds. If different behavior is desired, the code will need "
+            "to be modified."
         )
-    classes = stratification_classification(X[response_colname], y[response_colname])
+    classes = stratification_classification(X[response_colname_no_rep], y.squeeze())
 
     # Step 6: Initialize StratifiedKFold for stratified splits
     logger.debug("Generating stratified k-fold splits")
@@ -245,7 +264,14 @@ def stratified_cv_modeling(
 
     # Step 7: Fit the model using the custom cross-validation folds
     logger.debug("Fitting the model")
-    model.fit(X, y.values.ravel(), sample_weight=sample_weight)
+    if drop_columns_before_modeling:
+        logger.info(f"Dropping columns {drop_columns_before_modeling} before modeling")
+
+    model.fit(
+        X.drop(drop_columns_before_modeling, axis=1),
+        y.values.ravel(),
+        sample_weight=sample_weight,
+    )
 
     return model
 
@@ -325,13 +351,20 @@ def bootstrap_stratified_cv_modeling(
             weights = sample_counts / len(y)
 
         model_i = stratified_cv_modeling(
-            Y_resampled, X_resampled, estimator, sample_weight=weights
+            Y_resampled,
+            X_resampled,
+            estimator,
+            sample_weight=weights,
+            drop_columns_before_modeling=kwargs.get("drop_columns_before_modeling", []),
         )
         alpha_list.append(model_i.alpha_)
         bootstrap_coefs.append(model_i.coef_)
 
     # Convert coefficients list to a DataFrame with column names from X
-    bootstrap_coefs_df = pd.DataFrame(bootstrap_coefs, columns=X.columns)
+    bootstrap_coefs_df = pd.DataFrame(
+        bootstrap_coefs,
+        columns=X.drop(kwargs.get("drop_columns_before_modeling", []), axis=1).columns,
+    )
 
     # Compute confidence intervals
     ci_dict = {

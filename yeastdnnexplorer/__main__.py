@@ -77,7 +77,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     output_dirpath = os.path.join(args.output_dir, args.perturbed_tf)
     if os.path.exists(output_dirpath):
         raise FileExistsError(
-            f"File {args.response_file} already exists. "
+            f"File {output_dirpath} already exists. "
             "Please specify a different `output_dir`."
         )
     else:
@@ -100,6 +100,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         predictors_df=predictors_df,
         drop_intercept=True,
         quantile_threshold=args.data_quantile,
+        formula=args.formula,
     )
 
     # Configure and fit LassoCV estimator
@@ -135,6 +136,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
             fit_intercept=True,
             selection="random",
             random_state=42,
+            drop_columns_before_modeling=args.drop_columns_before_modeling,
         )
     except Exception as exc:
         raise RuntimeError(
@@ -272,6 +274,23 @@ def main() -> None:
         help="A response variable column to use. The data indices should be in "
         "the same format (e.g., symbol or locus tag) so that the perturbed gene can "
         "be removed from the data prior to modeling.",
+    )
+    input_group.add_argument(
+        "--formula",
+        type=str,
+        default=None,
+        help="The formula to use for modeling. If omitted, a formula with all of "
+        "the interactors will be used, eg "
+        "perturbed_tf_lrr ~ perturbed_tf + perturbed_tf:other_tf1 + ...",
+    )
+    input_group.add_argument(
+        "--drop_columns_before_modeling",
+        type=str,
+        nargs="+",
+        default=[],
+        help="List of columns to drop from the predictors data before modeling. "
+        "This is useful if you need to include a column for the stratification "
+        "but do not want to use it as a predictor",
     )
     input_group.add_argument(
         "--data_quantile",
