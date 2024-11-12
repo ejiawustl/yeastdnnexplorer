@@ -34,7 +34,7 @@ repos:
       - id: black-jupyter
 
   - repo: https://github.com/PyCQA/docformatter
-    rev: "master"
+    rev: "v1.7.5"
     hooks:
       - id: docformatter
         args:
