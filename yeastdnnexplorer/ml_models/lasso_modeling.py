@@ -221,7 +221,9 @@ def stratified_cv_modeling(
     :raises ValueError: if y is not a single column DataFrame
     :raises ValueError: if X is not a DataFrame with 1 or more columns, or the number
         of rows in y does not match the number of rows in X
+    :raises ValueError: if classes is not a numpy array or is empty
     :raises ValueError: If the estimator does not have a `cv` attribute
+
     """
     # Validate data
     if not isinstance(y, pd.DataFrame):
@@ -232,6 +234,8 @@ def stratified_cv_modeling(
         raise ValueError("The predictors X must be a DataFrame.")
     if X.shape[0] != y.shape[0]:
         raise ValueError("The number of rows in X must match the number of rows in y.")
+    if classes.size == 0 or not isinstance(classes, np.ndarray):
+        raise ValueError("The classes must be a non-empty numpy array.")
 
     # Verify estimator has a `cv` attribute
     if not hasattr(estimator, "cv"):
@@ -338,9 +342,9 @@ def bootstrap_stratified_cv_modeling(
         model_i = stratified_cv_modeling(
             Y_resampled,
             X_resampled,
-            estimator,
+            classes=kwargs.get("classes", np.ndarray([])),
+            estimator=estimator,
             sample_weight=weights,
-            drop_columns_before_modeling=kwargs.get("drop_columns_before_modeling", []),
         )
         alpha_list.append(model_i.alpha_)
         bootstrap_coefs.append(model_i.coef_)
