@@ -125,10 +125,20 @@ def generate_modeling_data(
 
     # Step 4: Generate X, y matrices with patsy
     logger.info(f"Generating modeling data with formula: {formula}")
-    y, X = pt.dmatrices(formula, tmp_df, return_type="dataframe")
-
-    # Clean up column names in `y`
-    y.columns = y.columns.str.replace("_LRR", "")
+    try:
+        # Attempt to create matrices
+        y, X = pt.dmatrices(formula, tmp_df, return_type="dataframe")
+        # Clean up column names in `y`
+        y.columns = y.columns.str.replace("_LRR", "")
+    except pt.PatsyError as exc:
+        # Check if it's the specific missing outcome variable error
+        if "model is missing required outcome variables" in str(exc):
+            logger.info("No outcome variable found in the formula")
+            X = pt.dmatrix(formula, tmp_df, return_type="dataframe")
+            y = pd.Series(dtype="float64")
+        else:
+            # Re-raise the error if it's something else
+            raise
 
     return y, X
 
@@ -367,7 +377,7 @@ def bootstrap_stratified_cv_modeling(
     # Convert coefficients list to a DataFrame with column names from X
     bootstrap_coefs_df = pd.DataFrame(
         bootstrap_coefs,
-        columns=X.drop(kwargs.get("drop_columns_before_modeling", []), axis=1).columns,
+        columns=X.columns,
     )
 
     # Compute confidence intervals
