@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import time
 from typing import Literal
 
@@ -13,6 +14,7 @@ from sklearn.linear_model import LassoCV
 from yeastdnnexplorer.ml_models.lasso_modeling import (
     bootstrap_stratified_cv_modeling,
     generate_modeling_data,
+    stratification_classification,
     stratified_cv_modeling,
 )
 from yeastdnnexplorer.utils import LogLevel, configure_logger
@@ -112,9 +114,24 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         n_jobs=4,
     )
 
+    if re.match("_rep\\d+", y.columns[0]):
+        logger.debug(
+            "Removing replicate suffix from the column name "
+            "to create the stratification classes."
+        )
+
+    regulator_tf = re.sub("_rep\\d+", "", y.columns[0])
+
+    try:
+        classes = stratification_classification(X[regulator_tf].squeeze(), y.squeeze())
+    except KeyError as exc:
+        raise RuntimeError(
+            f"column {regulator_tf} not found in predictors dataframe."
+        ) from exc
+
     # Fit the model to extract alphas
     try:
-        lasso_model = stratified_cv_modeling(y, X, lassoCV_estimator)
+        lasso_model = stratified_cv_modeling(y, X, classes, lassoCV_estimator)
     except Exception as exc:
         raise RuntimeError(
             f"Failed to fit the LassoCV model on {args.perturbed_tf}."

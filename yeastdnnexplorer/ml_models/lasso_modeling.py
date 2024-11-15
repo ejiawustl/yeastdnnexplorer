@@ -271,7 +271,7 @@ def bootstrap_stratified_cv_modeling(
     use_sample_weight_in_cv: bool = False,
     **kwargs,
 ) -> tuple[dict[str, dict[str, tuple[float, float]]], pd.DataFrame, list[float]]:
-    """
+    r"""
     Perform bootstrap resampling to generate confidence intervals for
     Lasso coefficients. See 6.2 in https://hastie.su.domains/StatLearnSparsity/ -- this
     is an implementation of the algorithm described in that section.
@@ -301,6 +301,10 @@ def bootstrap_stratified_cv_modeling(
     :raises ValueError: If `n_bootstraps` is not an integer greater than 0.
     :raises ValueError: If `ci_percentiles` is not a list of integers or floats.
     :raises ValueError: If `use_sample_weight_in_cv` is not a boolean.
+    :raises ValueError: If the response variable is not in the predictors DataFrame.
+        If there are replicates, they are expected to have the suffix _rep\d+. This
+        is attempted to be removed from the response variable name to match the
+        predictors DataFrame.
     """
     # Validate input parameters
     if not isinstance(n_bootstraps, int) or n_bootstraps < 1:
@@ -324,6 +328,13 @@ def bootstrap_stratified_cv_modeling(
             "passed to bootstrap_cv_modeling()."
         )
 
+    response_tf = re.sub(r"_rep\d+", "", y.columns[0])
+
+    if response_tf not in X.columns:
+        raise ValueError(
+            f"The response variable {response_tf} is not in the predictors DataFrame."
+        )
+
     bootstrap_coefs = []
     alpha_list = []
 
@@ -339,10 +350,14 @@ def bootstrap_stratified_cv_modeling(
             sample_counts = np.bincount(integer_indices, minlength=len(y))
             weights = sample_counts / len(y)
 
+        classes = stratification_classification(
+            X_resampled.loc[:, response_tf].squeeze(), Y_resampled.squeeze()
+        )
+
         model_i = stratified_cv_modeling(
             Y_resampled,
             X_resampled,
-            classes=kwargs.get("classes", np.ndarray([])),
+            classes=classes,
             estimator=estimator,
             sample_weight=weights,
         )
