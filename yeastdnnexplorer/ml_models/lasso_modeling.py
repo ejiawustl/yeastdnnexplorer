@@ -1,24 +1,20 @@
 import logging
-import random
 import re
 import warnings
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import patsy as pt
 import seaborn as sns
-import matplotlib.pyplot as plt
+import statsmodels.api as sm
 from matplotlib.figure import Figure
-
 from sklearn.base import BaseEstimator, clone
 from sklearn.linear_model import LassoCV, LinearRegression
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import r2_score
+from sklearn.model_selection import StratifiedKFold
 from sklearn.utils import resample
-
-import patsy as pt
-import statsmodels.api as sm
-
 
 logger = logging.getLogger("main")
 
@@ -551,7 +547,7 @@ def get_significant_predictors(
     predictors_df: pd.DataFrame,
     add_max_lrb: bool,
     **kwargs: Any,
-) -> Tuple[Dict[str, float], pd.DataFrame, pd.Series]:
+) -> tuple[dict[str, tuple[float, float]], pd.DataFrame, pd.Series]:
     """
     This function is used to get the significant predictors for a given TF. It is
     capable of conducting steps 1.1 and 1.2 described above.
@@ -560,14 +556,14 @@ def get_significant_predictors(
         identified
     :param response_df: The DataFrame containing the response values
     :param predictors_df: The DataFrame containing the predictor values
-    :param add_max_lrb: A boolean to add/not add in the max_LRB term for a response
-        TF into the formula that we perform bootstrapping on
-    :param kwargs: Additional arguments to be passed to the function. Expected
-    arguments are 'quantile_threshold' from generate_modeling_data() and 'ci_percentile'
-    from examine_bootstrap_coefficients()
+    :param add_max_lrb: A boolean to add/not add in the max_LRB term for a response TF
+        into the formula that we perform bootstrapping on
+    :param kwargs: Additional arguments to be passed to the function. Expected arguments
+        are 'quantile_threshold' from generate_modeling_data() and 'ci_percentile' from
+        examine_bootstrap_coefficients()
+    :return sig_coef_dict: A dictionary containing the significant predictors and their
+        corresponding coefficients
 
-    :return sig_coef_dict: A dictionary containing the significant predictors
-        and their corresponding coefficients
     """
 
     y, X = generate_modeling_data(
@@ -600,7 +596,8 @@ def get_significant_predictors(
     )
 
     if add_max_lrb:
-        # add a column to X which is the rowMax excluding column `predictor_variable` called max_lrb
+        # add a column to X which is the rowMax excluding column `predictor_variable`
+        # called max_lrb
         X["max_lrb"] = X.drop(columns=predictor_variable).max(axis=1)
 
     # set the alphas_ attribute of the lassoCV_estimator to the alphas_ attribute of the
@@ -652,8 +649,8 @@ def stratified_cv_r2(
         LinearRegression() model.
     :param skf: the StratifiedKFold object to be used in the modeling. By default, this
         is a 4-fold stratified CV with shuffle=True and random_state=42.
-
     :return: the average r-squared value for the stratified CV
+
     """
 
     estimator_local = clone(estimator)
@@ -675,7 +672,7 @@ def stratified_cv_r2(
 
 def try_interactor_variants(
     intersect_coefficients, interactor, **kwargs
-) -> dict[str | Union[str, float]]:
+) -> list[dict[str, Any]]:
     """
     For a given interactor, replace the term in the formula with one variant:
         1. the main effect
@@ -743,11 +740,11 @@ def get_interactor_importance(
     full_X: pd.DataFrame,
     stratification_classes: np.ndarray,
     intersect_coefficients: set,
-) -> tuple[float, list[dict[str | Union[str, float]]]]:
+) -> tuple[float, list[dict[str, Any]]]:
     """
-    For each interactor in the intersect_coefficients, run test_interactor_importance
-    to compare the variants' avg_rsquared to the input_model_avg_rsquared. If a variant
-    of the interactor term is better, record it in a dictionary. Return the
+    For each interactor in the intersect_coefficients, run test_interactor_importance to
+    compare the variants' avg_rsquared to the input_model_avg_rsquared. If a variant of
+    the interactor term is better, record it in a dictionary. Return the
     `instersect_coefficient` model's avg R-squared and the dictionary of interaction
     alternatives that, when that alternative replaces a single interaction term,
     improves the rsquared.
@@ -756,13 +753,13 @@ def get_interactor_importance(
     :param full_X: the full predictor matrix
     :param stratification_classes: the stratification classes for the data
     :param intersect_coefficients: the set of coefficients that are determined to be
-        significant, expected to be from either a bootstrap procedure on a LassoCV
-        model on a full partition of the data and the top 10% by perturbed binding, or
-        LassoCV followed by backwards selection by p-value significance.
-
+        significant, expected to be from either a bootstrap procedure on a LassoCV model
+        on a full partition of the data and the top 10% by perturbed binding, or LassoCV
+        followed by backwards selection by p-value significance.
     :return: a tuple with the first element being the input_model_avg_rsquared and the
         second element being a list of dictionaries with keys 'interactor', 'variant',
         and 'avg_r2'
+
     """
 
     input_model_avg_rsquared = stratified_cv_r2(
@@ -798,10 +795,10 @@ def get_non_zero_predictors(
     response_df: pd.DataFrame,
     predictors_df: pd.DataFrame,
     **kwargs: Any,
-) -> List[str]:
+) -> list[str]:
     """
-    This function is used to get the features with non-zero coefficients from
-    LassoCV for a given TF. It is capable of conducting steps 1a and 1b above.
+    This function is used to get the features with non-zero coefficients from LassoCV
+    for a given TF. It is capable of conducting steps 1a and 1b above.
 
     :param perturbed_tf: str, the TF for which the significant predictors are to be
         identified
@@ -810,9 +807,10 @@ def get_non_zero_predictors(
     :param predictors_df: pd.DataFrame, the predictors dataframe containing the
         predictor values
     :param kwargs: dict, additional arguments to be passed to the function. Expected
-    arguments is 'quantile_threshold' fom generate_modeling_data() to signify the top 10%
-
+        arguments is 'quantile_threshold' fom generate_modeling_data() to signify the
+        top 10%
     :return non_zero_features: List, a list containing the features with non-zero coefs
+
     """
     # Validate input
     if perturbed_tf not in response_df.columns:
@@ -864,27 +862,27 @@ def get_non_zero_predictors(
 
 def backwards_OLS_feature_selection(
     perturbed_tf: str,
-    intersect_coefficients: Set[str],
+    intersect_coefficients: set[str],
     response_df: pd.DataFrame,
     predictors_df: pd.DataFrame,
-) -> Set[str]:
+) -> set[str]:
     """
     Perform backward feature selection using OLS to iteratively filter down a set of
-    input features. This is the wrapper method that performs Step 3 of Workflow 2 in
-    the interactor_modeling_workflow notebook. It takes in the intersected coefficients
-    from Step 2 and calls the helper method get_full_data() and
-    select_significant_features() in order to continuously update the set of features
-    by eliminating those that are above a given p-value threshold. It does this on the
-    whole data first, then the top 10% of the data by perturbed TF binding until there
-    are no more features that are insignificant. It returns this set of features.
+    input features. This is the wrapper method that performs Step 3 of Workflow 2 in the
+    interactor_modeling_workflow notebook. It takes in the intersected coefficients from
+    Step 2 and calls the helper method get_full_data() and select_significant_features()
+    in order to continuously update the set of features by eliminating those that are
+    above a given p-value threshold. It does this on the whole data first, then the top
+    10% of the data by perturbed TF binding until there are no more features that are
+    insignificant. It returns this set of features.
 
     :param perturbed_tf: The name of the response TF.
     :param intersect_coefficients: The initial intersected set of predictor features
         passed in from Step 2.
     :param predictors_df: A DataFrame containing the predictor data for the response TF.
     :param response_df: A DataFrame containing the response data for the response TF.
-
     :return: The final refined set of significant predictors.
+
     """
     # Get the full dataset
     full_data = get_full_data(
@@ -906,8 +904,10 @@ def backwards_OLS_feature_selection(
 
     # Step 3.1: Iteratively filter features using the full dataset
     while curr_set_size != prev_set_size and curr_set_size != 0:
-        curr_feature_set = select_significant_features(
-            perturbed_tf, curr_feature_set, full_data, p_value_threshold=0.001
+        curr_feature_set = set(
+            select_significant_features(
+                perturbed_tf, curr_feature_set, full_data, p_value_threshold=0.001
+            )
         )
         prev_set_size = curr_set_size
         curr_set_size = len(curr_feature_set)
@@ -919,8 +919,10 @@ def backwards_OLS_feature_selection(
     # Step 3.2: Iteratively filter features using the top 10% dataset
     # this time we use a less stringent p-value threshold since there is less data
     while curr_set_size != prev_set_size and curr_set_size != 0:
-        curr_feature_set = select_significant_features(
-            perturbed_tf, curr_feature_set, top_10_data, p_value_threshold=0.01
+        curr_feature_set = set(
+            select_significant_features(
+                perturbed_tf, curr_feature_set, top_10_data, p_value_threshold=0.01
+            )
         )
         prev_set_size = curr_set_size
         curr_set_size = len(curr_feature_set)
@@ -932,7 +934,7 @@ def get_full_data(
     perturbed_tf: str,
     response_df: pd.DataFrame,
     predictors_df: pd.DataFrame,
-    quantile_threshold: Optional[float] = None,
+    quantile_threshold: float | None = None,
 ) -> pd.DataFrame:
     """
     This is a helper method for backwards_OLS_feature_selection and is a wrapper of
@@ -945,8 +947,8 @@ def get_full_data(
     :param predictors_df: A DataFrame containing the predictor data.
     :param quantile_threshold: Optional float to filter data on quantile thresholds.
         This is used for getting the top 10% of the data in Step 3.2 of Workflow 2.
-
     :return: A DataFrame combining the response and predictor variable columns.
+
     """
     # Generate response (y) and predictors (X) using generate_modeling_data
     y, X = generate_modeling_data(
@@ -996,6 +998,7 @@ def select_significant_features(
     :param p_value_threshold: A threshold for qualifying significance for features.
 
     :return: List of significant predictors with original names.
+
     """
     # Create a mapping of original names to modified names - see docstring for details
     name_mapping = {col: col.replace(":", "_") for col in feature_set}

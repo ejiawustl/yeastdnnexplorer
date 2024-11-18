@@ -6,19 +6,19 @@ from sklearn.linear_model import LassoCV
 
 # Import the functions from the module being tested
 from yeastdnnexplorer.ml_models.lasso_modeling import (
+    backwards_OLS_feature_selection,
     bootstrap_stratified_cv_modeling,
     examine_bootstrap_coefficients,
     generate_modeling_data,
+    get_full_data,
+    get_interactor_importance,
+    get_non_zero_predictors,
+    get_significant_predictors,
+    select_significant_features,
     stratification_classification,
     stratified_cv_modeling,
-    get_full_data,
-    select_significant_features,
-    backwards_OLS_feature_selection,
-    get_non_zero_predictors,
-    get_interactor_importance,
-    try_interactor_variants,
     stratified_cv_r2,
-    get_significant_predictors,
+    try_interactor_variants,
 )
 
 
