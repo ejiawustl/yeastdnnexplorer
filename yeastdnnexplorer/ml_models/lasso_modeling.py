@@ -694,6 +694,35 @@ def get_interactor_importance(
     return input_model_avg_rsquared, interactor_results
 
 
+def select_significant_features(
+    feature_set: set, y: pd.DataFrame, X: pd.DataFrame, p_value_threshold: float
+) -> list:
+    """
+    Select significant features from a given set of predictors using OLS.
+
+    :param feature_set: Set of predictor features to be filtered on.
+    :param y: A DataFrame containing the response data for the perturbed TF.
+    :param X: A DataFrame containing all of the predictor data which we will identify
+        the relevant subset for fitting the model using feature_set
+    :param p_value_threshold: A threshold for qualifying significance for features.
+    :return: List of significant predictors with original names.
+
+    """
+
+    X = X.loc[:, list(feature_set)]
+    # Add in the intercept term
+    X["Intercept"] = 1.0
+    # Fit the OLS model and identify significant features
+    model = sm.OLS(y, X).fit()
+    significant_features = [
+        feature
+        for feature, pval in model.pvalues.items()
+        if pval < p_value_threshold and feature != "Intercept"
+    ]
+
+    return significant_features
+
+
 def backwards_OLS_feature_selection(
     perturbed_tf: str,
     intersect_coefficients: set[str],
@@ -744,11 +773,10 @@ def backwards_OLS_feature_selection(
             drop_intercept=True,
         )
 
-        # Combine y and X into a single DataFrame for Patsy
-        data = pd.concat([y.add_suffix("_LRR"), X], axis=1)
+        y = y.add_suffix("_LRR")
 
         # Adding the max_lrb column to the data
-        data["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
+        X["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
 
         # Initialize variables for the while loop
         prev_set_size = 0
@@ -758,9 +786,9 @@ def backwards_OLS_feature_selection(
         while curr_set_size != prev_set_size and curr_set_size > 0:
             curr_feature_set = set(
                 select_significant_features(
-                    perturbed_tf,
                     curr_feature_set,
-                    data,
+                    y,
+                    X,
                     p_value_threshold=p_value_threshold,
                 )
             )
@@ -768,48 +796,3 @@ def backwards_OLS_feature_selection(
             curr_set_size = len(curr_feature_set)
 
     return curr_feature_set
-
-
-def select_significant_features(
-    perturbed_tf: str, feature_set: set, data: pd.DataFrame, p_value_threshold: float
-) -> list:
-    """
-    Select significant features from a given set of predictors using OLS.
-
-    :param perturbed_tf: The name of the response TF.
-    :param feature_set: Set of predictor features to be filtered on.
-    :param data: A DataFrame containing both predictors and response data for Patsy.
-    :param p_value_threshold: A threshold for qualifying significance for features.
-    :return: List of significant predictors with original names.
-
-    """
-    # Create a mapping of original names to modified names
-    name_mapping = {col: col.replace(":", "_") for col in feature_set}
-
-    # Replace colons with underscores in feature_set and data column names
-    modified_feature_set = {name_mapping[col] for col in feature_set}
-    data.columns = data.columns.str.replace(":", "_")
-
-    # Generate formula
-    predictors_str = " + ".join(modified_feature_set)
-    response = f"{perturbed_tf}_LRR"
-    formula = f"{response} ~ {predictors_str}"
-
-    # Generate the design matrix
-    y, X = pt.dmatrices(formula, data, return_type="dataframe")
-
-    # Fit the OLS model and identify significant features
-    model = sm.OLS(y, X).fit()
-    significant_features = [
-        feature
-        for feature, pval in model.pvalues.items()
-        if pval < p_value_threshold and feature != "Intercept"
-    ]
-
-    # Convert modified names back to their original names
-    reverse_mapping = {v: k for k, v in name_mapping.items()}
-    significant_features = [
-        reverse_mapping.get(feature, feature) for feature in significant_features
-    ]
-
-    return significant_features

@@ -156,9 +156,9 @@ def test_select_significant_features(sample_data):
     )
 
     # Combine y and X into a single DataFrame for Patsy
-    data = pd.concat([y.add_suffix("_LRR"), X], axis=1)
+    y = y.add_suffix("_LRR")
     feature_set = {"tf1", "tf1:tf2", "tf1:tf3"}
-    significant_features = select_significant_features("tf1", feature_set, data, 0.05)
+    significant_features = select_significant_features(feature_set, y, X, 0.05)
     assert isinstance(significant_features, list), "The output should be a list."
     assert all(
         isinstance(feature, str) for feature in significant_features
