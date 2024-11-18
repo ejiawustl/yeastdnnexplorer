@@ -112,6 +112,11 @@ def generate_modeling_data(
             f"{quantile_threshold} of {perturbed_tf}: {tmp_df.shape[0]}"
         )
 
+    # need to check if max_lrb exists in the column if the input formula includes it
+    if formula and "max_lrb" in formula:
+        logger.info("Adding max_lrb column to the DataFrame.")
+        tmp_df["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
+
     # Step 3: Define the interaction formula
     if formula is None:
         interaction_terms = " + ".join(
@@ -535,102 +540,6 @@ def examine_bootstrap_coefficients(
     return fig, significant_coefs_dict
 
 
-# TODO: must have option to add max_lrb
-
-# TODO: the top10% models likely should not have teh same number of classes as the
-# all data, possibly not stratified at all
-
-
-def get_significant_predictors(
-    perturbed_tf: str,
-    response_df: pd.DataFrame,
-    predictors_df: pd.DataFrame,
-    add_max_lrb: bool,
-    **kwargs: Any,
-) -> tuple[dict[str, tuple[float, float]], pd.DataFrame, pd.Series]:
-    """
-    This function is used to get the significant predictors for a given TF. It is
-    capable of conducting steps 1.1 and 1.2 described above.
-
-    :param perturbed_tf: the TF for which the significant predictors are to be
-        identified
-    :param response_df: The DataFrame containing the response values
-    :param predictors_df: The DataFrame containing the predictor values
-    :param add_max_lrb: A boolean to add/not add in the max_LRB term for a response TF
-        into the formula that we perform bootstrapping on
-    :param kwargs: Additional arguments to be passed to the function. Expected arguments
-        are 'quantile_threshold' from generate_modeling_data() and 'ci_percentile' from
-        examine_bootstrap_coefficients()
-    :return sig_coef_dict: A dictionary containing the significant predictors and their
-        corresponding coefficients
-
-    """
-
-    y, X = generate_modeling_data(
-        perturbed_tf,
-        response_df,
-        predictors_df,
-        quantile_threshold=kwargs.get("quantile_threshold", None),
-        drop_intercept=True,
-    )
-
-    # NOTE: fit_intercept is set to `true`
-    lassoCV_estimator = LassoCV(
-        fit_intercept=True,
-        max_iter=10000,
-        selection="random",
-        random_state=42,
-        n_jobs=4,
-    )
-
-    predictor_variable = re.sub(r"_rep\d+", "", perturbed_tf)
-
-    stratification_classes = stratification_classification(
-        X[predictor_variable].squeeze(), y.squeeze()
-    )
-
-    # Fit the model to the data in order to extract the alphas_ which are generated
-    # during the fitting process
-    lasso_model = stratified_cv_modeling(
-        y, X, stratification_classes, lassoCV_estimator
-    )
-
-    if add_max_lrb:
-        # add a column to X which is the rowMax excluding column `predictor_variable`
-        # called max_lrb
-        X["max_lrb"] = X.drop(columns=predictor_variable).max(axis=1)
-
-    # set the alphas_ attribute of the lassoCV_estimator to the alphas_ attribute of the
-    # lasso_model fit on the whole data. This will allow the
-    # bootstrap_stratified_cv_modeling function to use the same set of lambdas
-    lassoCV_estimator.alphas_ = lasso_model.alphas_
-
-    # for test purposes, set n_bootstraps to 10
-    # NOTE: fit_intercept=True is passed to the internal Lasso model for bootstrap
-    # iterations, along with some other settings
-
-    logging.info("running bootstraps")
-    bootstrap_lasso_output = bootstrap_stratified_cv_modeling(
-        y=y,
-        X=X,
-        estimator=lassoCV_estimator,
-        ci_percentile=kwargs.get("ci_percentile", 95.0),
-        n_bootstraps=kwargs.get("n_bootstraps", 10),
-        max_iter=10000,
-        fit_intercept=True,
-        selection="random",
-        random_state=42,
-    )
-
-    sig_coef_plt, sig_coef_dict = examine_bootstrap_coefficients(
-        bootstrap_lasso_output, ci_level=kwargs.get("ci_percentile", 95.0)
-    )
-
-    plt.close(sig_coef_plt)
-
-    return sig_coef_dict, y, stratification_classes
-
-
 def stratified_cv_r2(
     y: pd.DataFrame,
     X: pd.DataFrame,
@@ -640,7 +549,8 @@ def stratified_cv_r2(
 ) -> float:
     """
     Calculate the average stratified CV r-squared for a given estimator and data. By
-    default, this is a 4-fold stratified CV with a LinearRegression estimator.
+    default, this is a 4-fold stratified CV with a LinearRegression estimator. Note that
+    this method will add an intercept to X if it doesn't already exist.
 
     :param y: The response variable. See generate_modeling_data()
     :param X: The predictor variables. See generate_modeling_data()
@@ -652,6 +562,10 @@ def stratified_cv_r2(
     :return: the average r-squared value for the stratified CV
 
     """
+    # Check if the X matrix already has an intercept
+    if "Intercept" not in X.columns:
+        X = X.copy()  # Ensure we don't modify the original DataFrame
+        X["Intercept"] = 1.0
 
     estimator_local = clone(estimator)
     r2_scores = []
@@ -671,13 +585,12 @@ def stratified_cv_r2(
 
 
 def try_interactor_variants(
-    intersect_coefficients, interactor, **kwargs
+    intersect_coefficients: set[str], interactor: str, **kwargs: Any
 ) -> list[dict[str, Any]]:
     """
     For a given interactor, replace the term in the formula with one variant:
         1. the main effect
-        IGNORE FOR NOW: 2. the main effect + interactor
-    For each of the variants, calculate the average stratified CV r-squared with
+    For this variant, calculate the average stratified CV r-squared with
     stratified_cv_r2().
 
     :param intersect_coefficients: the set of coefficients that are determined to be
@@ -703,12 +616,6 @@ def try_interactor_variants(
         raise ValueError("stratification_classes must be passed as a keyword argument")
 
     main_effect = interactor.split(":")[1]
-    # interactor_formula_variants = [main_effect, [main_effect, interactor]]
-
-    # NOTE: may need to change this back to the original line above: I just noticed in
-    # the Yeast To-Dos document that in the final pipeline, we only compare our formula
-    # to the variant in which the main effect is subbed in. It appears we do not try
-    # the formula in which we also add the main effect while keeping the interaction
     interactor_formula_variants = [main_effect]
 
     output = []
@@ -767,7 +674,7 @@ def get_interactor_importance(
     )
 
     # for each interactor in the intersect_coefficients, run test_interactor_importance
-    # compare the variants' avg_rsquared to the input_model_avg_rsquared. Record
+    # compare the variant's avg_rsquared to the input_model_avg_rsquared. Record
     # the best performing.
     interactor_results = []
     for interactor in intersect_coefficients:
@@ -781,83 +688,10 @@ def get_interactor_importance(
                 stratification_classes=stratification_classes,
             )
 
-            # compare the avg_r2 values of the two variants to input_model_avg_rsquared
-            variant_dict = max(interactor_variant_results, key=lambda x: x["avg_r2"])
-
-            if variant_dict["avg_r2"] > input_model_avg_rsquared:
-                interactor_results.append(variant_dict)
+            if interactor_variant_results[0]["avg_r2"] > input_model_avg_rsquared:
+                interactor_results.append(interactor_variant_results[0])
 
     return input_model_avg_rsquared, interactor_results
-
-
-def get_non_zero_predictors(
-    perturbed_tf: str,
-    response_df: pd.DataFrame,
-    predictors_df: pd.DataFrame,
-    **kwargs: Any,
-) -> list[str]:
-    """
-    This function is used to get the features with non-zero coefficients from LassoCV
-    for a given TF. It is capable of conducting steps 1a and 1b above.
-
-    :param perturbed_tf: str, the TF for which the significant predictors are to be
-        identified
-    :param response_df: pd.DataFrame, the response dataframe containing the response
-        values
-    :param predictors_df: pd.DataFrame, the predictors dataframe containing the
-        predictor values
-    :param kwargs: dict, additional arguments to be passed to the function. Expected
-        arguments is 'quantile_threshold' fom generate_modeling_data() to signify the
-        top 10%
-    :return non_zero_features: List, a list containing the features with non-zero coefs
-
-    """
-    # Validate input
-    if perturbed_tf not in response_df.columns:
-        raise ValueError(
-            f"The response TF {perturbed_tf} does not exist in the response DataFrame."
-        )
-    if perturbed_tf not in predictors_df.columns:
-        raise ValueError(
-            f"The response TF {perturbed_tf} does not exist in the binding DataFrame."
-        )
-    if response_df.shape[0] != predictors_df.shape[0]:
-        raise ValueError(
-            "The binding and response DataFrames contain different counts of genes"
-        )
-
-    tf_y, tf_X = generate_modeling_data(
-        perturbed_tf,
-        response_df,
-        predictors_df,
-        quantile_threshold=kwargs.get("quantile_threshold", None),
-        drop_intercept=True,
-    )
-
-    # add the max_lrb term to the formula
-    tf_X["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
-
-    # NOTE: fit_intercept is set to `true`
-    lassoCV_estimator = LassoCV(
-        fit_intercept=True,
-        max_iter=10000,
-        selection="random",
-        random_state=42,
-        n_jobs=4,
-    )
-
-    # create the classifications
-    classes = stratification_classification(tf_X[perturbed_tf], tf_y[perturbed_tf])
-
-    # Fit the model to the data in order to extract the non-zero coefficients
-    # surviving after the fitting process
-    lasso_model = stratified_cv_modeling(tf_y, tf_X, classes, lassoCV_estimator)
-
-    # return a list of the non-zero features that survived the fitting
-    non_zero_indices = lasso_model.coef_ != 0
-    non_zero_features = tf_X.columns[non_zero_indices]
-
-    return non_zero_features
 
 
 def backwards_OLS_feature_selection(
@@ -865,142 +699,91 @@ def backwards_OLS_feature_selection(
     intersect_coefficients: set[str],
     response_df: pd.DataFrame,
     predictors_df: pd.DataFrame,
+    quantile_thresholds: list[float | None],
+    p_value_thresholds: list[float],
 ) -> set[str]:
     """
     Perform backward feature selection using OLS to iteratively filter down a set of
-    input features. This is the wrapper method that performs Step 3 of Workflow 2 in the
-    interactor_modeling_workflow notebook. It takes in the intersected coefficients from
-    Step 2 and calls the helper method get_full_data() and select_significant_features()
-    in order to continuously update the set of features by eliminating those that are
-    above a given p-value threshold. It does this on the whole data first, then the top
-    10% of the data by perturbed TF binding until there are no more features that are
-    insignificant. It returns this set of features.
+    input features based on multiple quantile and p-value thresholds. This now takes in
+    two sets of identical sizes in which a desired quantile on the data, as well as the
+    corresponding p-value threshold to use on this data are given. This way, it can
+    handle any combination of quantiles and thresholds and perform backwards OLS feature
+    selection on all of them.
 
     :param perturbed_tf: The name of the response TF.
     :param intersect_coefficients: The initial intersected set of predictor features
         passed in from Step 2.
-    :param predictors_df: A DataFrame containing the predictor data for the response TF.
     :param response_df: A DataFrame containing the response data for the response TF.
+    :param predictors_df: A DataFrame containing the predictor data for the response TF.
+    :param quantile_thresholds: A list of quantile thresholds to filter the data.
+        Each value should be a float between 0 and 1, or None for no filtering.
+    :param p_value_thresholds: A list of corresponding p-value thresholds for each
+        quantile. The length must match `quantile_thresholds`.
+
     :return: The final refined set of significant predictors.
 
+    :raises ValueError: If `quantile_thresholds` and `p_value_thresholds` are not the
+        same length.
+
     """
-    # Get the full dataset
-    full_data = get_full_data(
-        perturbed_tf,
-        response_df,
-        predictors_df,
-        quantile_threshold=None,  # Full dataset has no quantile filtering
-    )
+    # Ensure input lists are of the same length
+    if len(quantile_thresholds) != len(p_value_thresholds):
+        raise ValueError(
+            "quantile_thresholds and p_value_thresholds must have the same length."
+        )
 
-    # Get the top 10% binding dataset
-    top_10_data = get_full_data(
-        perturbed_tf, response_df, predictors_df, quantile_threshold=0.1
-    )
-
-    # keep count of the feature set size to  track when to terminate the while loop
-    prev_set_size = 0
-    curr_set_size = len(intersect_coefficients)
     curr_feature_set = intersect_coefficients
 
-    # Step 3.1: Iteratively filter features using the full dataset
-    while curr_set_size != prev_set_size and curr_set_size != 0:
-        curr_feature_set = set(
-            select_significant_features(
-                perturbed_tf, curr_feature_set, full_data, p_value_threshold=0.001
-            )
+    for quantile, p_value_threshold in zip(quantile_thresholds, p_value_thresholds):
+        # Generate modeling data for the current quantile
+        y, X = generate_modeling_data(
+            perturbed_tf,
+            response_df,
+            predictors_df,
+            quantile_threshold=quantile,
+            drop_intercept=True,
         )
-        prev_set_size = curr_set_size
+
+        # Combine y and X into a single DataFrame for Patsy
+        data = pd.concat([y.add_suffix("_LRR"), X], axis=1)
+
+        # Adding the max_lrb column to the data
+        data["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
+
+        # Initialize variables for the while loop
+        prev_set_size = 0
         curr_set_size = len(curr_feature_set)
 
-    # Reinitialize variables for the second loop
-    prev_set_size = 0  # Reset for Step 3.2
-    curr_set_size = len(curr_feature_set)
-
-    # Step 3.2: Iteratively filter features using the top 10% dataset
-    # this time we use a less stringent p-value threshold since there is less data
-    while curr_set_size != prev_set_size and curr_set_size != 0:
-        curr_feature_set = set(
-            select_significant_features(
-                perturbed_tf, curr_feature_set, top_10_data, p_value_threshold=0.01
+        # Perform iterative feature selection
+        while curr_set_size != prev_set_size and curr_set_size > 0:
+            curr_feature_set = set(
+                select_significant_features(
+                    perturbed_tf,
+                    curr_feature_set,
+                    data,
+                    p_value_threshold=p_value_threshold,
+                )
             )
-        )
-        prev_set_size = curr_set_size
-        curr_set_size = len(curr_feature_set)
+            prev_set_size = curr_set_size
+            curr_set_size = len(curr_feature_set)
 
     return curr_feature_set
-
-
-def get_full_data(
-    perturbed_tf: str,
-    response_df: pd.DataFrame,
-    predictors_df: pd.DataFrame,
-    quantile_threshold: float | None = None,
-) -> pd.DataFrame:
-    """
-    This is a helper method for backwards_OLS_feature_selection and is a wrapper of
-    generate_modeling_data() which transforms the y and X matrices output from that
-    function into a single DataFrame that is compatible with Patsy for creating OLS
-    models for backward OLS feature selection.
-
-    :param perturbed_tf: The name of the response TF.
-    :param response_df: A DataFrame containing the response data.
-    :param predictors_df: A DataFrame containing the predictor data.
-    :param quantile_threshold: Optional float to filter data on quantile thresholds.
-        This is used for getting the top 10% of the data in Step 3.2 of Workflow 2.
-    :return: A DataFrame combining the response and predictor variable columns.
-
-    """
-    # Generate response (y) and predictors (X) using generate_modeling_data
-    y, X = generate_modeling_data(
-        perturbed_tf,
-        response_df,
-        predictors_df,
-        drop_intercept=True,
-        quantile_threshold=quantile_threshold,
-    )
-
-    # Rename response column to append "_LRR" (for Patsy to differentiate between
-    # response TF and its main effect columns)
-    y = y.rename(columns=lambda col: col + "_LRR")
-
-    # Concatenate response and predictor data
-    full_data = pd.concat([y, X], axis=1, join="inner")
-
-    # add the max_lrb column
-    full_data["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
-
-    return full_data
 
 
 def select_significant_features(
     perturbed_tf: str, feature_set: set, data: pd.DataFrame, p_value_threshold: float
 ) -> list:
     """
-    This is a helper method for backwards_OLS_feature_selection which select significant
-    features from a given set of predictors by creating an OLS model and removing
-    features whose p-values are above a given threshold. This performs a single
-    iteration of filtering, and returns the set of interactors that survive after.
-
-    Note: because the data input into this method was created by get_full_data(), which
-    is a wrapper of generate_modeling_data(), the columns already are the interactions
-    between TFs. This is an issue with Patsy because when it sees "TF1:TF2" as an
-    example feature in the formula whose design matrix it is creating, it thinks to
-    find the individual columns "TF1" and "TF2" and taking their product. However, since
-    the data passed in is only of the form "TF1:TF2" for all interactions, we need to
-    temporarily swap the ":" for an "_" so that Patsy doesn't generate an error saying
-    it cannot identify the data needed.
+    Select significant features from a given set of predictors using OLS.
 
     :param perturbed_tf: The name of the response TF.
-    :param feature_set: Set of predictor features to be filtered on. This might be the
-        initial set of intersected features passed in from Step 2, or any subsequent
-        filtered set of features output from previous iterations of calling this method.
+    :param feature_set: Set of predictor features to be filtered on.
     :param data: A DataFrame containing both predictors and response data for Patsy.
     :param p_value_threshold: A threshold for qualifying significance for features.
-
     :return: List of significant predictors with original names.
 
     """
-    # Create a mapping of original names to modified names - see docstring for details
+    # Create a mapping of original names to modified names
     name_mapping = {col: col.replace(":", "_") for col in feature_set}
 
     # Replace colons with underscores in feature_set and data column names

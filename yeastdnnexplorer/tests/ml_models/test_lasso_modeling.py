@@ -10,10 +10,7 @@ from yeastdnnexplorer.ml_models.lasso_modeling import (
     bootstrap_stratified_cv_modeling,
     examine_bootstrap_coefficients,
     generate_modeling_data,
-    get_full_data,
     get_interactor_importance,
-    get_non_zero_predictors,
-    get_significant_predictors,
     select_significant_features,
     stratification_classification,
     stratified_cv_modeling,
@@ -147,20 +144,19 @@ def test_examine_bootstrap_coefficients_custom_threshold(lasso_output):
     plt.close(plt_obj)
 
 
-# test for get_full_data
-def test_get_full_data(sample_data):
-    response_df, predictors_df = sample_data
-    full_data = get_full_data("tf1", response_df, predictors_df)
-    assert isinstance(full_data, pd.DataFrame), "The result should be a DataFrame."
-    assert "max_lrb" in full_data.columns, "max_lrb column should be present."
-    assert "tf1_LRR" in full_data.columns, "The response column should be included."
-    assert "tf1" in full_data.columns, "The binding column should be included."
-
-
 # test for select_significant_features
 def test_select_significant_features(sample_data):
     response_df, predictors_df = sample_data
-    data = get_full_data("tf1", response_df, predictors_df)
+    y, X = generate_modeling_data(
+        "tf1",
+        response_df,
+        predictors_df,
+        quantile_threshold=None,
+        drop_intercept=True,
+    )
+
+    # Combine y and X into a single DataFrame for Patsy
+    data = pd.concat([y.add_suffix("_LRR"), X], axis=1)
     feature_set = {"tf1", "tf1:tf2", "tf1:tf3"}
     significant_features = select_significant_features("tf1", feature_set, data, 0.05)
     assert isinstance(significant_features, list), "The output should be a list."
@@ -174,49 +170,11 @@ def test_backwards_OLS_feature_selection(sample_data):
     response_df, predictors_df = sample_data
     intersect_coefficients = {"tf1", "tf1:tf2", "tf1:tf3"}
     final_features = backwards_OLS_feature_selection(
-        "tf1", intersect_coefficients, response_df, predictors_df
+        "tf1", intersect_coefficients, response_df, predictors_df, [None], [0.05]
     )
     assert (
         final_features or len(final_features) == 0
     ), "The set can be empty or have valid features."
-
-
-# test for get_non_zero_predictors on add data
-def test_get_non_zero_predictors_all_data(sample_data):
-    response_df, predictors_df = sample_data
-    non_zero_features = get_non_zero_predictors("tf1", response_df, predictors_df)
-
-    # Convert to list if necessary
-    non_zero_features = (
-        list(non_zero_features)
-        if isinstance(non_zero_features, pd.Index)
-        else non_zero_features
-    )
-
-    assert isinstance(non_zero_features, list), "Output should be a list."
-    assert all(
-        isinstance(feature, str) for feature in non_zero_features
-    ), "All features should be strings."
-
-
-# test for get_non_zero_predictors on top 10% of data
-def test_get_non_zero_predictors_top_10(sample_data):
-    response_df, predictors_df = sample_data
-    non_zero_features = get_non_zero_predictors(
-        "tf1", response_df, predictors_df, quantile_threshold=0.1
-    )
-
-    # Convert to list if necessary
-    non_zero_features = (
-        list(non_zero_features)
-        if isinstance(non_zero_features, pd.Index)
-        else non_zero_features
-    )
-
-    assert isinstance(non_zero_features, list), "Output should be a list."
-    assert all(
-        isinstance(feature, str) for feature in non_zero_features
-    ), "All features should be strings."
 
 
 # test for get_interactor_importance
@@ -289,41 +247,3 @@ def test_stratified_cv_r2(sample_data):
     r2 = stratified_cv_r2(y, X, classes)
     assert isinstance(r2, float), "The result should be a float."
     assert -1 <= r2 <= 1, "R² should be between 0 and 1."
-
-
-# test for get_significant_predictors
-def test_get_significant_predictors(sample_data):
-    response_df, predictors_df = sample_data
-    perturbed_tf = "tf1"
-
-    # Call the function with basic settings
-    significant_predictors, y, stratification_classes = get_significant_predictors(
-        perturbed_tf,
-        response_df,
-        predictors_df,
-        add_max_lrb=True,  # Assuming max_lrb is required in the predictors
-        quantile_threshold=0.1,
-        ci_percentile=95.0,
-        n_bootstraps=10,  # Use a small number of bootstraps for testing efficiency
-    )
-
-    # Validate outputs
-    assert isinstance(
-        significant_predictors, dict
-    ), "Expected significant predictors to be a dictionary."
-    assert all(
-        isinstance(k, str) for k in significant_predictors.keys()
-    ), "Keys in significant predictors should be strings."
-    assert all(
-        isinstance(v, tuple) and len(v) == 2 for v in significant_predictors.values()
-    ), "Values in significant predictors should be tuples of length 2 (CI bounds)."
-
-    assert isinstance(y, pd.DataFrame), "Expected `y` to be a DataFrame."
-    assert y.shape[1] == 1, "Expected `y` to have a single column."
-
-    assert isinstance(
-        stratification_classes, np.ndarray
-    ), "Expected stratification classes to be a numpy array."
-    assert (
-        stratification_classes.shape[0] == y.shape[0]
-    ), "Number of stratification classes should match the number of samples in `y`."
