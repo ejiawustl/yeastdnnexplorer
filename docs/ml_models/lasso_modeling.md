@@ -19,3 +19,23 @@
 <h2>examine_bootstrap_coefficients</h2>
 
 ::: yeastdnnexplorer.ml_models.lasso_modeling.examine_bootstrap_coefficients
+
+<h2>get_significant_predictors</h2>
+
+::: yeastdnnexplorer.ml_models.lasso_modeling.get_significant_predictors
+
+<h2>stratified_cv_r2</h2>
+
+::: yeastdnnexplorer.ml_models.lasso_modeling.stratified_cv_r2
+
+<h2>try_interactor_variants</h2>
+
+::: yeastdnnexplorer.ml_models.lasso_modeling.try_interactor_variants
+
+<h2>get_interactor_importance</h2>
+
+::: yeastdnnexplorer.ml_models.lasso_modeling.get_interactor_importance
+
+<h2>OLSFeatureSelector</h2>
+
+::: yeastdnnexplorer.ml_models.lasso_modeling.OLSFeatureSelector
