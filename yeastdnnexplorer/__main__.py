@@ -12,10 +12,14 @@ from shiny import run_app
 from sklearn.linear_model import LassoCV
 
 from yeastdnnexplorer.ml_models.lasso_modeling import (
+    OLSFeatureSelector,
     bootstrap_stratified_cv_modeling,
     generate_modeling_data,
+    get_interactor_importance,
+    get_significant_predictors,
     stratification_classification,
     stratified_cv_modeling,
+    stratified_cv_r2,
 )
 from yeastdnnexplorer.utils import LogLevel, configure_logger
 
@@ -185,6 +189,160 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     bootstrap_alphas.to_csv(bootstrap_alphas_path, index=False)
 
 
+def find_interactors_workflow(args: argparse.Namespace) -> None:
+    """
+    Run the find_interactors_workflow with the specified arguments.
+
+    :param args: The parsed command-line arguments.
+
+    """
+    output_dirpath = args.output_dir
+    if os.path.exists(output_dirpath):
+        raise FileExistsError(
+            f"File {output_dirpath} already exists. "
+            "Please specify a different `output_dir`."
+        )
+    else:
+        os.makedirs(output_dirpath, exist_ok=True)
+    if not os.path.exists(args.response_file):
+        raise FileNotFoundError(f"File {args.response_file} does not exist.")
+    if not os.path.exists(args.predictors_file):
+        raise FileNotFoundError(f"File {args.predictors_file} does not exist.")
+
+    # Load data
+    response_df = pd.read_csv(args.response_file, index_col=0)
+    predictors_df = pd.read_csv(args.predictors_file, index_col=0)
+
+    # Step 1: Run LassoCV, possibly with the bootstrap depending on args.method
+    lasso_res = {
+        "all": get_significant_predictors(
+            args.method,
+            args.response_tf,
+            response_df,
+            predictors_df,
+            ci_percentile=args.all_ci_percentile,
+            n_bootstraps=args.n_bootstraps,
+            add_max_lrb=True,
+        ),
+        "top": get_significant_predictors(
+            args.method,
+            args.response_tf,
+            response_df,
+            predictors_df,
+            ci_percentile=args.top_ci_percentile,
+            n_bootstraps=args.n_bootstraps,
+            add_max_lrb=True,
+            quantile_threshold=args.data_quantile,
+        ),
+    }
+
+    # Step 2: find the intersect coefficients between the all and top models. This is
+    # performed differently depending on args.method (see the tutorial)
+    if args.method == "lassocv_ols":
+        lassocv_ols_intersect_coefs = set(
+            lasso_res["all"]["sig_coefs"].keys()
+        ).intersection(set(lasso_res["top"]["sig_coefs"].keys()))
+
+        # Initialize the selector
+        selector_all = OLSFeatureSelector(p_value_threshold=args.all_pval_threshold)
+
+        # Transform the data to select only significant features
+        selector_all.refine_features(
+            lasso_res["all"]["predictors"][list(lassocv_ols_intersect_coefs)],
+            lasso_res["all"]["response"],
+        )
+
+        selector_top10 = OLSFeatureSelector(p_value_threshold=args.top_pval_threshold)
+
+        _ = selector_top10.refine_features(
+            lasso_res["top"]["predictors"].loc[
+                lasso_res["top"]["response"].index, list(lassocv_ols_intersect_coefs)
+            ],
+            lasso_res["top"]["response"],
+        )
+
+        final_features = set(
+            selector_all.get_significant_features(drop_intercept=True)
+        ).intersection(selector_top10.get_significant_features(drop_intercept=True))
+
+    else:
+        final_features = set(lasso_res["all"]["sig_coefs"].keys()).intersection(
+            set(lasso_res["top"]["sig_coefs"].keys())
+        )
+
+    # Step 3: determine if the interactor predictor is significant compared to its
+    # main effect
+    # get the additional main effects which will be tested from the final_features
+    main_effects = []
+    for term in final_features:
+        if ":" in term:
+            main_effects.append(term.split(":")[1])
+        else:
+            main_effects.append(term)
+
+    # combine these main effects with the final_features
+    interactor_terms_and_main_effects = list(final_features) + main_effects
+
+    # generate a model matrix with the intersect terms and the main effects. This full
+    # model will not be used for modeling -- subsets of the columns will be, however.
+    _, full_X = generate_modeling_data(
+        args.response_tf,
+        response_df,
+        predictors_df,
+        formula=f"~ {' + '.join(interactor_terms_and_main_effects)}",
+        drop_intercept=False,
+    )
+
+    # Add the max_lrb column, just in case it is present in the final_predictors. In this
+    # case, it is not.
+    model_tf = re.sub("_rep\\d+", "", args.response_tf)
+    max_lrb = predictors_df.drop(columns=model_tf).max(axis=1)
+    full_X["max_lrb"] = max_lrb
+
+    # Currently, this function tests each interactor term in the final_features
+    # with two variants by replacing the interaction term with the main effect only, and
+    # with the main effect + interactor. If either of the variants has a higher avg
+    # r-squared than the intersect_model, then that variant is returned. In this case,
+    # the original final_features are the best model.
+    full_avg_rsquared, interactor_results = get_interactor_importance(
+        lasso_res["all"]["response"],
+        full_X,
+        lasso_res["all"]["classes"],
+        final_features,
+    )
+
+    # use the interactor_results to update the final_features
+    for interactor_variant in interactor_results:
+        k = interactor_variant["interactor"]
+        v = interactor_variant["variant"]
+        final_features.remove(k)
+        final_features.add(v)
+
+    # Step 4: compare the results of the final model with a univariate model
+    avg_r2_univariate = stratified_cv_r2(
+        lasso_res["all"]["response"],
+        lasso_res["all"]["predictors"][[model_tf]],
+        lasso_res["all"]["classes"],
+    )
+
+    final_model_avg_r_squared = stratified_cv_r2(
+        lasso_res["all"]["response"],
+        full_X[list(final_features)],
+        lasso_res["all"]["classes"],
+    )
+
+    output_dict = {
+        "response_tf": args.response_tf,
+        "final_features": list(final_features),
+        "avg_r2_univariate": avg_r2_univariate,
+        "final_model_avg_r_squared": final_model_avg_r_squared,
+    }
+
+    output_path = os.path.join(args.output_dir, f"{args.response_tf}_output.json")
+    with open(output_path, "w") as f:
+        json.dump(output_dict, f, indent=4)
+
+
 class CustomHelpFormatter(argparse.HelpFormatter):
     """Custom help formatter to format the subcommands and general options sections."""
 
@@ -324,6 +482,104 @@ def main() -> None:
     )
 
     lasso_parser.set_defaults(func=run_lasso_bootstrap)
+
+    # Find Interactors Workflow command
+    find_interactors_parser = subparsers.add_parser(
+        "find_interactors_workflow",
+        help="Run the find interactors workflow",
+        description="Run the find interactors workflow",
+        formatter_class=CustomHelpFormatter,
+    )
+
+    # Input arguments
+    input_group = find_interactors_parser.add_argument_group("Input")
+    input_group.add_argument(
+        "--response_file",
+        type=str,
+        required=True,
+        help="Path to the response CSV file. NOTE: the index column must be "
+        "present and the first column in the CSV. Additionally, the index values "
+        "should be either symbols or locus tags, matching the index values in both "
+        "response and predictors files. The perturbed gene will be removed from "
+        "the model data only if column names in response data match the index "
+        "format (e.g., symbol or locus tag).",
+    )
+    input_group.add_argument(
+        "--predictors_file",
+        type=str,
+        required=True,
+        help="Path to the predictors CSV file. NOTE: the index column must be "
+        "present and the first column in the CSV. Additionally, the index values "
+        "should be either symbols or locus tags, matching the index values in both "
+        "response and predictors files. The perturbed gene will be removed from the "
+        "model data only if column names in predictors data match the index "
+        "format (e.g., symbol or locus tag).",
+    )
+    input_group.add_argument(
+        "--response_tf",
+        type=str,
+        required=True,
+        help="The response TF to use for the modeling.",
+    )
+    input_group.add_argument(
+        "--method",
+        type=str,
+        required=True,
+        choices=["bootstrap_lassocv", "lassocv_ols"],
+        help="The method to use for modeling.",
+    )
+    input_group.add_argument(
+        "--all_ci_percentile",
+        type=float,
+        default=99.8,
+        help="The percentile to use for the all model CI. This will only be used "
+        "if the method is `bootstrap_lassocv`.",
+    )
+    input_group.add_argument(
+        "--top_ci_percentile",
+        type=float,
+        default=90.0,
+        help="The percentile to use for the top model CI. This will only be used "
+        "if the method is `bootstrap_lassocv`.",
+    )
+    input_group.add_argument(
+        "--all_pval_threshold",
+        type=float,
+        default=0.001,
+        help="The p-value threshold to use for the all model. This will only be used "
+        "if the method is `lassocv_ols`.",
+    )
+    input_group.add_argument(
+        "--top_pval_threshold",
+        type=float,
+        default=0.01,
+        help="The p-value threshold to use for the top model. This will only be used "
+        "if the method is `lassocv_ols`.",
+    )
+    input_group.add_argument(
+        "--data_quantile",
+        type=float,
+        default=0.1,
+        help="The quantile threshold to use for the `top` data. See the tutorial for "
+        "more information.",
+    )
+    input_group.add_argument(
+        "--n_bootstraps",
+        type=int,
+        default=1000,
+        help="Number of bootstrap samples to generate.",
+    )
+
+    # output arguments
+    output_group = find_interactors_parser.add_argument_group("Output")
+    output_group.add_argument(
+        "--output_dir",
+        type=str,
+        default="./find_interactors_output",
+        help="Path to the output directory where results will be saved.",
+    )
+
+    find_interactors_parser.set_defaults(func=find_interactors_workflow)
 
     # Add the general arguments to the subcommand parsers
     add_general_arguments_to_subparsers(subparsers, [log_level_argument])

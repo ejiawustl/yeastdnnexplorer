@@ -1,20 +1,20 @@
 import logging
 import re
 import warnings
-from typing import Any
+from typing import Any, Literal, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import patsy as pt
 import seaborn as sns
-import statsmodels.api as sm
 from matplotlib.figure import Figure
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.linear_model import LassoCV, LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils import resample
+from statsmodels.api import OLS, add_constant
 
 logger = logging.getLogger("main")
 
@@ -540,6 +540,127 @@ def examine_bootstrap_coefficients(
     return fig, significant_coefs_dict
 
 
+def get_significant_predictors(
+    method: Literal["lassocv_ols", "bootstrap_lassocv"],
+    perturbed_tf: str,
+    response_df: pd.DataFrame,
+    predictors_df: pd.DataFrame,
+    add_max_lrb: bool,
+    **kwargs: Any,
+) -> dict[str, Union[set[str], pd.DataFrame, np.ndarray]]:
+    """
+    This function is used to get the significant predictors for a given TF using
+    bootstrapped LassoCV. It wraps `generate_modeling_data`,
+    `stratification_classification`, `stratified_cv_modeling`,
+    `bootstrap_stratified_cv_modeling` and `examine_bootstrap_coefficients`.
+
+    :param method: This must be 'lassocv_ols', which will conduct a single lassocv call
+        followed by pruning non zero coefficients by pvalue until all are significant
+        at a given threshold, or 'bootstrap_lassocv', which will conduct bootstrapped
+        lassoCV and return only coefficients which are deemed significant by
+        ci_percentile and threshold (see `examine_bootstrap_coeficients` for more info)
+    :param perturbed_tf: the TF for which the significant predictors are to be
+        identified
+    :param response_df: The DataFrame containing the response values
+    :param predictors_df: The DataFrame containing the predictor values
+    :param add_max_lrb: A boolean to add/not add in the max_LRB term for a response TF
+        into the formula that we perform bootstrapping on
+    :param kwargs: Additional arguments to be passed to the function. Expected arguments
+        are 'quantile_threshold' from generate_modeling_data() and 'ci_percentile' from
+        examine_bootstrap_coefficients()
+
+    :return a dictionary with keys 'sig_coefs', 'response', 'classes' where:
+        - 'sig_coefs' is a dictionary of significant coefficients
+        - 'response' is the response variable
+        - 'classes' is the stratification classes for the data
+
+    """
+    if method not in ["lassocv_ols", "bootstrap_lassocv"]:
+        raise ValueError(
+            "method {} unrecognized. "
+            "Must be one of ['lassocv_ols', 'bootstrap_lassocv']"
+        )
+
+    y, X = generate_modeling_data(
+        perturbed_tf,
+        response_df,
+        predictors_df,
+        quantile_threshold=kwargs.get("quantile_threshold", None),
+        drop_intercept=True,
+    )
+
+    # NOTE: fit_intercept is set to `true`
+    lassoCV_estimator = LassoCV(
+        fit_intercept=True,
+        max_iter=10000,
+        selection="random",
+        random_state=42,
+        n_jobs=4,
+    )
+
+    predictor_variable = re.sub(r"_rep\d+", "", perturbed_tf)
+
+    stratification_classes = stratification_classification(
+        X[predictor_variable].squeeze(), y.squeeze()
+    )
+
+    if add_max_lrb:
+        # add a column to X which is the rowMax excluding column `predictor_variable`
+        # called max_lrb
+        max_lrb = X.drop(columns=predictor_variable).max(axis=1)
+        X["max_lrb"] = max_lrb
+
+    # Fit the model to the data in order to extract the alphas_ which are generated
+    # during the fitting process
+    lasso_model = stratified_cv_modeling(
+        y, X, stratification_classes, lassoCV_estimator
+    )
+
+    if method == "lassocv_ols":
+        # return a list of the non-zero features that survived the fitting
+        non_zero_indices = lasso_model.coef_ != 0
+        non_zero_features = X.columns[non_zero_indices]
+        sig_coef_dict = {
+            k: v for k, v in zip(non_zero_features, lasso_model.coef_[non_zero_indices])
+        }
+
+    elif method == "bootstrap_lassocv":
+
+        # set the alphas_ attribute of the lassoCV_estimator to the alphas_ attribute of the
+        # lasso_model fit on the whole data. This will allow the
+        # bootstrap_stratified_cv_modeling function to use the same set of lambdas
+        lassoCV_estimator.alphas_ = lasso_model.alphas_
+
+        logging.info("running bootstraps")
+        bootstrap_lasso_output = bootstrap_stratified_cv_modeling(
+            y=y,
+            X=X,
+            estimator=lassoCV_estimator,
+            ci_percentile=kwargs.get("ci_percentile", 95.0),
+            n_bootstraps=kwargs.get("n_bootstraps", 1000),
+            max_iter=10000,
+            fit_intercept=True,
+            selection="random",
+            random_state=42,
+        )
+
+        sig_coef_plt, sig_coef_dict = examine_bootstrap_coefficients(
+            bootstrap_lasso_output, ci_level=kwargs.get("ci_percentile", 95.0)
+        )
+
+        plt.close(sig_coef_plt)
+
+    else:
+        ValueError(f"method {method} not recognized")
+
+    return {
+        "sig_coefs": sig_coef_dict,
+        "predictors": X,
+        "response": y,
+        "classes": stratification_classes,
+    }
+
+
 def stratified_cv_r2(
     y: pd.DataFrame,
     X: pd.DataFrame,
@@ -562,17 +683,18 @@ def stratified_cv_r2(
     :return: the average r-squared value for the stratified CV
 
     """
-    # Check if the X matrix already has an intercept
-    if "Intercept" not in X.columns:
-        X = X.copy()  # Ensure we don't modify the original DataFrame
-        X["Intercept"] = 1.0
+    # If there is no constant term, add one
+    X_with_intercept = add_constant(X, has_constant="skip")
 
     estimator_local = clone(estimator)
     r2_scores = []
 
-    for train_idx, test_idx in skf.split(X, classes):
+    for train_idx, test_idx in skf.split(X_with_intercept, classes):
         # Use train and test indices to split X and y
-        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        X_train, X_test = (
+            X_with_intercept.iloc[train_idx],
+            X_with_intercept.iloc[test_idx],
+        )
         y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
 
         # Fit the model
@@ -615,7 +737,12 @@ def try_interactor_variants(
     if stratification_classes is None:
         raise ValueError("stratification_classes must be passed as a keyword argument")
 
+    # the main effect is assumed to be the second term in the interactor
     main_effect = interactor.split(":")[1]
+
+    # Add different ways of replacing the interactor term here. if only [main_effect],
+    # then the only variant tested will be replacing the interactor term with the main
+    # effect
     interactor_formula_variants = [main_effect]
 
     output = []
@@ -688,111 +815,132 @@ def get_interactor_importance(
                 stratification_classes=stratification_classes,
             )
 
-            if interactor_variant_results[0]["avg_r2"] > input_model_avg_rsquared:
-                interactor_results.append(interactor_variant_results[0])
+            # Find the variant with the maximum avg_r2
+            best_variant = max(interactor_variant_results, key=lambda x: x["avg_r2"])
+
+            # Compare its avg_r2 to the input model's avg_r2
+            if best_variant["avg_r2"] > input_model_avg_rsquared:
+                interactor_results.append(best_variant)
 
     return input_model_avg_rsquared, interactor_results
 
 
-def select_significant_features(
-    feature_set: set, y: pd.DataFrame, X: pd.DataFrame, p_value_threshold: float
-) -> list:
+class OLSFeatureSelector(BaseEstimator, TransformerMixin):
     """
-    Select significant features from a given set of predictors using OLS.
-
-    :param feature_set: Set of predictor features to be filtered on.
-    :param y: A DataFrame containing the response data for the perturbed TF.
-    :param X: A DataFrame containing all of the predictor data which we will identify
-        the relevant subset for fitting the model using feature_set
-    :param p_value_threshold: A threshold for qualifying significance for features.
-    :return: List of significant predictors with original names.
-
+    This class performs iterative feature selection using OLS. It removes non-significant
+    features until all remaining features are significant.
     """
 
-    X = X.loc[:, list(feature_set)]
-    # Add in the intercept term
-    X["Intercept"] = 1.0
-    # Fit the OLS model and identify significant features
-    model = sm.OLS(y, X).fit()
-    significant_features = [
-        feature
-        for feature, pval in model.pvalues.items()
-        if pval < p_value_threshold and feature != "Intercept"
-    ]
+    def __init__(self, p_value_threshold=0.05):
+        """
+        Initialize the OLSFeatureSelector.
 
-    return significant_features
+        :param p_value_threshold: The threshold for significance of features.
+        """
+        self.p_value_threshold = p_value_threshold
+        self.significant_features_ = []
+        self.summary_ = None
 
+    def fit(self, X, y, **kwargs) -> "OLSFeatureSelector":
+        """
+        Fit the OLS model and identify significant features. Significant features are
+        selected based based on coef p-value <= p_value_threshold.
 
-def backwards_OLS_feature_selection(
-    perturbed_tf: str,
-    intersect_coefficients: set[str],
-    response_df: pd.DataFrame,
-    predictors_df: pd.DataFrame,
-    quantile_thresholds: list[float | None],
-    p_value_thresholds: list[float],
-) -> set[str]:
-    """
-    Perform backward feature selection using OLS to iteratively filter down a set of
-    input features based on multiple quantile and p-value thresholds. This now takes in
-    two sets of identical sizes in which a desired quantile on the data, as well as the
-    corresponding p-value threshold to use on this data are given. This way, it can
-    handle any combination of quantiles and thresholds and perform backwards OLS feature
-    selection on all of them.
+        :param X: A DataFrame of predictors.
+        :param y: A Series of the response variable.
+        :param kwargs: Optional arguments for `add_constant()`.
+        :return: self
+        """
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError(f"X must be a DataFrame, but got {type(X)}.")
 
-    :param perturbed_tf: The name of the response TF.
-    :param intersect_coefficients: The initial intersected set of predictor features
-        passed in from Step 2.
-    :param response_df: A DataFrame containing the response data for the response TF.
-    :param predictors_df: A DataFrame containing the predictor data for the response TF.
-    :param quantile_thresholds: A list of quantile thresholds to filter the data.
-        Each value should be a float between 0 and 1, or None for no filtering.
-    :param p_value_thresholds: A list of corresponding p-value thresholds for each
-        quantile. The length must match `quantile_thresholds`.
-
-    :return: The final refined set of significant predictors.
-
-    :raises ValueError: If `quantile_thresholds` and `p_value_thresholds` are not the
-        same length.
-
-    """
-    # Ensure input lists are of the same length
-    if len(quantile_thresholds) != len(p_value_thresholds):
-        raise ValueError(
-            "quantile_thresholds and p_value_thresholds must have the same length."
+        # Add an intercept term
+        X_with_intercept = add_constant(
+            X, has_constant=kwargs.get("has_constant", "skip")
         )
 
-    curr_feature_set = intersect_coefficients
+        # Fit the OLS model
+        model = OLS(y, X_with_intercept).fit()
 
-    for quantile, p_value_threshold in zip(quantile_thresholds, p_value_thresholds):
-        # Generate modeling data for the current quantile
-        y, X = generate_modeling_data(
-            perturbed_tf,
-            response_df,
-            predictors_df,
-            quantile_threshold=quantile,
-            drop_intercept=True,
-        )
+        # Save the summary table
+        summary_data = {
+            "coef": model.params,
+            "std_err": model.bse,
+            "t": model.tvalues,
+            "pvalue": model.pvalues,
+        }
+        self.summary_ = pd.DataFrame(summary_data)
 
-        y = y.add_suffix("_LRR")
+        # Select significant features based on p-values
+        self.significant_features_ = [
+            feature
+            for feature, pval in model.pvalues.items()
+            if pval <= self.p_value_threshold and feature != "const"
+        ]
+        return self
 
-        # Adding the max_lrb column to the data
-        X["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
+    def transform(self, X) -> pd.DataFrame:
+        """
+        Iteratively apply OLS to remove non-significant features.
 
-        # Initialize variables for the while loop
-        prev_set_size = 0
-        curr_set_size = len(curr_feature_set)
+        :param X: A DataFrame of predictors.
+        :return: A DataFrame with only significant features.
+        """
+        if not self.significant_features_:
+            raise ValueError("The model has not been fitted yet. Call `fit` first.")
 
-        # Perform iterative feature selection
-        while curr_set_size != prev_set_size and curr_set_size > 0:
-            curr_feature_set = set(
-                select_significant_features(
-                    curr_feature_set,
-                    y,
-                    X,
-                    p_value_threshold=p_value_threshold,
-                )
-            )
-            prev_set_size = curr_set_size
-            curr_set_size = len(curr_feature_set)
+        # Ensure the input DataFrame contains all required columns
+        missing_features = set(self.significant_features_) - set(X.columns)
+        if missing_features:
+            raise ValueError(f"Missing required features: {missing_features}")
 
-    return curr_feature_set
+        return X[self.significant_features_]
+
+    def refine_features(self, X, y) -> pd.DataFrame:
+        """
+        Iteratively fit the selector and transform the data in one step.
+
+        :param X: A DataFrame of predictors.
+        :param y: A Series of the response variable.
+
+        :return: A DataFrame with only significant predictors.
+        """
+        remaining_predictors = X.copy()
+
+        while True:
+            # Fit the model
+            self.fit(remaining_predictors, y)
+
+            # If all predictors are significant, stop iteration
+            if set(self.significant_features_) == set(remaining_predictors.columns):
+                break
+
+            # Retain only significant predictors for the next iteration
+            remaining_predictors = remaining_predictors[self.significant_features_]
+
+        return remaining_predictors
+
+    def get_significant_features(self, drop_intercept=True) -> list:
+        """
+        Get the list of significant features.
+
+        param drop_intercept: Whether to exclude the intercept term from the list.
+            NOTE: this only looks for a feature called "Intercept"
+
+        :return: List of significant feature names.
+        """
+        if not self.significant_features_:
+            raise ValueError("The model has not been fitted yet. Call `fit` first.")
+        if drop_intercept and "Intercept" in self.significant_features_:
+            return [f for f in self.significant_features_ if f != "Intercept"]
+        return self.significant_features_
+
+    def get_summary(self) -> pd.DataFrame:
+        """
+        Get the OLS model summary as a DataFrame.
+
+        :return: A DataFrame containing coefficients, standard errors, t-values, and p-values.
+        """
+        if self.summary_ is None:
+            raise ValueError("The model has not been fitted yet. Call `fit` first.")
+        return self.summary_
