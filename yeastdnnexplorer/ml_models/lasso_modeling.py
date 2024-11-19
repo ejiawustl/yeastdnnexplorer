@@ -550,9 +550,9 @@ def get_significant_predictors(
 ) -> dict[str, set[str] | pd.DataFrame | np.ndarray]:
     """
     This function is used to get the significant predictors for a given TF using
-    bootstrapped LassoCV. It wraps `generate_modeling_data`,
-    `stratification_classification`, `stratified_cv_modeling`,
-    `bootstrap_stratified_cv_modeling` and `examine_bootstrap_coefficients`.
+    one of two methods, either the bootstrapped LassoCV, in which case we look for
+    intervals that do not cross 0, or direct LassoCV with a selection on non-zero
+    coefficients.
 
     :param method: This must be 'lassocv_ols', which will conduct a single lassocv call
         followed by pruning non zero coefficients by pvalue until all are significant
