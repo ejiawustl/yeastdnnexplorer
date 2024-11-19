@@ -236,29 +236,58 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         ),
     }
 
+    # Ensure lasso_res["all"]["sig_coefs"] and
+    # lasso_res["top"]["sig_coefs"] are dictionaries
+    all_sig_coefs = lasso_res["all"]["sig_coefs"]
+    top_sig_coefs = lasso_res["top"]["sig_coefs"]
+
+    # intersect with type checking
+    if isinstance(all_sig_coefs, dict) and isinstance(top_sig_coefs, dict):
+        lasso_intersect_coefs = set(all_sig_coefs.keys()).intersection(
+            set(top_sig_coefs.keys())
+        )
+    else:
+        raise TypeError(
+            "Expected 'sig_coefs' to be dictionaries in 'all' and 'top', "
+            f"but got {type(all_sig_coefs)} and {type(top_sig_coefs)}."
+        )
+
+    # extract the predictors and ensure that they are dataframes
+    all_predictors = lasso_res["all"]["predictors"]
+    top_predictors = lasso_res["top"]["predictors"]
+    top_response = lasso_res["top"]["response"]
+
+    if not isinstance(all_predictors, pd.DataFrame) or not isinstance(
+        top_predictors, pd.DataFrame
+    ):
+        raise TypeError(
+            "Expected 'predictors' to be dataframes in 'all' and 'top', "
+            f"but got {type(all_predictors)} and {type(top_predictors)}."
+        )
+    if not isinstance(top_response, pd.DataFrame):
+        raise TypeError(
+            "Expected 'response' to be a dataframe in 'top', "
+            f"but got {type(top_response)}."
+        )
+
     # Step 2: find the intersect coefficients between the all and top models. This is
     # performed differently depending on args.method (see the tutorial)
     if args.method == "lassocv_ols":
-        lassocv_ols_intersect_coefs = set(
-            lasso_res["all"]["sig_coefs"].keys()
-        ).intersection(set(lasso_res["top"]["sig_coefs"].keys()))
 
         # Initialize the selector
         selector_all = OLSFeatureSelector(p_value_threshold=args.all_pval_threshold)
 
         # Transform the data to select only significant features
         selector_all.refine_features(
-            lasso_res["all"]["predictors"][list(lassocv_ols_intersect_coefs)],
+            all_predictors[list(lasso_intersect_coefs)],
             lasso_res["all"]["response"],
         )
 
         selector_top10 = OLSFeatureSelector(p_value_threshold=args.top_pval_threshold)
 
         _ = selector_top10.refine_features(
-            lasso_res["top"]["predictors"].loc[
-                lasso_res["top"]["response"].index, list(lassocv_ols_intersect_coefs)
-            ],
-            lasso_res["top"]["response"],
+            top_predictors.loc[top_response.index, list(lasso_intersect_coefs)],
+            top_response,
         )
 
         final_features = set(
@@ -266,9 +295,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         ).intersection(selector_top10.get_significant_features(drop_intercept=True))
 
     else:
-        final_features = set(lasso_res["all"]["sig_coefs"].keys()).intersection(
-            set(lasso_res["top"]["sig_coefs"].keys())
-        )
+        final_features = lasso_intersect_coefs
 
     # Step 3: determine if the interactor predictor is significant compared to its
     # main effect
@@ -293,8 +320,8 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         drop_intercept=False,
     )
 
-    # Add the max_lrb column, just in case it is present in the final_predictors. In this
-    # case, it is not.
+    # Add the max_lrb column, just in case it is present in the final_predictors.
+    # In this case, it is not.
     model_tf = re.sub("_rep\\d+", "", args.response_tf)
     max_lrb = predictors_df.drop(columns=model_tf).max(axis=1)
     full_X["max_lrb"] = max_lrb
@@ -321,7 +348,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     # Step 4: compare the results of the final model with a univariate model
     avg_r2_univariate = stratified_cv_r2(
         lasso_res["all"]["response"],
-        lasso_res["all"]["predictors"][[model_tf]],
+        all_predictors[[model_tf]],
         lasso_res["all"]["classes"],
     )
 

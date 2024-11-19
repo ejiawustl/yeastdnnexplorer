@@ -1,7 +1,7 @@
 import logging
 import re
 import warnings
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -547,7 +547,7 @@ def get_significant_predictors(
     predictors_df: pd.DataFrame,
     add_max_lrb: bool,
     **kwargs: Any,
-) -> dict[str, Union[set[str], pd.DataFrame, np.ndarray]]:
+) -> dict[str, set[str] | pd.DataFrame | np.ndarray]:
     """
     This function is used to get the significant predictors for a given TF using
     bootstrapped LassoCV. It wraps `generate_modeling_data`,
@@ -626,8 +626,8 @@ def get_significant_predictors(
 
     elif method == "bootstrap_lassocv":
 
-        # set the alphas_ attribute of the lassoCV_estimator to the alphas_ attribute of the
-        # lasso_model fit on the whole data. This will allow the
+        # set the alphas_ attribute of the lassoCV_estimator to the alphas_
+        # attribute of the lasso_model fit on the whole data. This will allow the
         # bootstrap_stratified_cv_modeling function to use the same set of lambdas
         lassoCV_estimator.alphas_ = lasso_model.alphas_
 
@@ -827,8 +827,10 @@ def get_interactor_importance(
 
 class OLSFeatureSelector(BaseEstimator, TransformerMixin):
     """
-    This class performs iterative feature selection using OLS. It removes non-significant
-    features until all remaining features are significant.
+    This class performs iterative feature selection using OLS.
+
+    It removes non-significant features until all remaining features are significant.
+
     """
 
     def __init__(self, p_value_threshold=0.05):
@@ -836,6 +838,7 @@ class OLSFeatureSelector(BaseEstimator, TransformerMixin):
         Initialize the OLSFeatureSelector.
 
         :param p_value_threshold: The threshold for significance of features.
+
         """
         self.p_value_threshold = p_value_threshold
         self.significant_features_ = []
@@ -850,6 +853,7 @@ class OLSFeatureSelector(BaseEstimator, TransformerMixin):
         :param y: A Series of the response variable.
         :param kwargs: Optional arguments for `add_constant()`.
         :return: self
+
         """
         if not isinstance(X, pd.DataFrame):
             raise ValueError(f"X must be a DataFrame, but got {type(X)}.")
@@ -885,6 +889,7 @@ class OLSFeatureSelector(BaseEstimator, TransformerMixin):
 
         :param X: A DataFrame of predictors.
         :return: A DataFrame with only significant features.
+
         """
         if not self.significant_features_:
             raise ValueError("The model has not been fitted yet. Call `fit` first.")
@@ -902,8 +907,8 @@ class OLSFeatureSelector(BaseEstimator, TransformerMixin):
 
         :param X: A DataFrame of predictors.
         :param y: A Series of the response variable.
-
         :return: A DataFrame with only significant predictors.
+
         """
         remaining_predictors = X.copy()
 
@@ -928,6 +933,7 @@ class OLSFeatureSelector(BaseEstimator, TransformerMixin):
             NOTE: this only looks for a feature called "Intercept"
 
         :return: List of significant feature names.
+
         """
         if not self.significant_features_:
             raise ValueError("The model has not been fitted yet. Call `fit` first.")
@@ -939,7 +945,9 @@ class OLSFeatureSelector(BaseEstimator, TransformerMixin):
         """
         Get the OLS model summary as a DataFrame.
 
-        :return: A DataFrame containing coefficients, standard errors, t-values, and p-values.
+        :return: A DataFrame containing coefficients, standard errors, t-values, and
+            p-values.
+
         """
         if self.summary_ is None:
             raise ValueError("The model has not been fitted yet. Call `fit` first.")
