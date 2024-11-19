@@ -1,15 +1,18 @@
 import logging
 import re
 import warnings
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import patsy as pt
 import seaborn as sns
+import statsmodels.api as sm
 from matplotlib.figure import Figure
 from sklearn.base import BaseEstimator, clone
-from sklearn.linear_model import LassoCV
+from sklearn.linear_model import LassoCV, LinearRegression
+from sklearn.metrics import r2_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils import resample
 
@@ -108,6 +111,11 @@ def generate_modeling_data(
             f"Number of rows after filtering by the top "
             f"{quantile_threshold} of {perturbed_tf}: {tmp_df.shape[0]}"
         )
+
+    # need to check if max_lrb exists in the column if the input formula includes it
+    if formula and "max_lrb" in formula:
+        logger.info("Adding max_lrb column to the DataFrame.")
+        tmp_df["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
 
     # Step 3: Define the interaction formula
     if formula is None:
@@ -530,3 +538,261 @@ def examine_bootstrap_coefficients(
     plt.title(title_text)
 
     return fig, significant_coefs_dict
+
+
+def stratified_cv_r2(
+    y: pd.DataFrame,
+    X: pd.DataFrame,
+    classes: np.ndarray,
+    estimator: BaseEstimator = LinearRegression(),
+    skf: StratifiedKFold = StratifiedKFold(n_splits=4, shuffle=True, random_state=42),
+) -> float:
+    """
+    Calculate the average stratified CV r-squared for a given estimator and data. By
+    default, this is a 4-fold stratified CV with a LinearRegression estimator. Note that
+    this method will add an intercept to X if it doesn't already exist.
+
+    :param y: The response variable. See generate_modeling_data()
+    :param X: The predictor variables. See generate_modeling_data()
+    :param classes: the stratification classes for the data
+    :param estimator: the estimator to be used in the modeling. By default, this is a
+        LinearRegression() model.
+    :param skf: the StratifiedKFold object to be used in the modeling. By default, this
+        is a 4-fold stratified CV with shuffle=True and random_state=42.
+    :return: the average r-squared value for the stratified CV
+
+    """
+    # Check if the X matrix already has an intercept
+    if "Intercept" not in X.columns:
+        X = X.copy()  # Ensure we don't modify the original DataFrame
+        X["Intercept"] = 1.0
+
+    estimator_local = clone(estimator)
+    r2_scores = []
+
+    for train_idx, test_idx in skf.split(X, classes):
+        # Use train and test indices to split X and y
+        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
+
+        # Fit the model
+        model = estimator_local.fit(X_train, y_train)
+
+        # Calculate R-squared and append to r2_scores
+        r2_scores.append(r2_score(y_test, model.predict(X_test)))
+
+    return np.mean(r2_scores)
+
+
+def try_interactor_variants(
+    intersect_coefficients: set[str], interactor: str, **kwargs: Any
+) -> list[dict[str, Any]]:
+    """
+    For a given interactor, replace the term in the formula with one variant:
+        1. the main effect
+    For this variant, calculate the average stratified CV r-squared with
+    stratified_cv_r2().
+
+    :param intersect_coefficients: the set of coefficients that are determined to be
+        significant, expected to be from either a bootstrap procedure on a LassoCV
+        model on a full partition of the data and the top 10% by perturbed binding, or
+        LassoCV followed by backwards selection by adj-rsquared.
+    :param interactor: the interactor term to be tested
+    :param kwargs: additional arguments to be passed to the function. Expected
+        arguments are 'y', 'X', and 'stratification_classes'. See stratified_cv_r2()
+        for more information.
+
+    :return: a list with three dict entries, each with key
+        'interactor', 'variant', 'avg_r2'
+    """
+    y = kwargs.get("y")
+    if y is None:
+        raise ValueError("y must be passed as a keyword argument")
+    X = kwargs.get("X")
+    if X is None:
+        raise ValueError("X must be passed as a keyword argument")
+    stratification_classes = kwargs.get("stratification_classes")
+    if stratification_classes is None:
+        raise ValueError("stratification_classes must be passed as a keyword argument")
+
+    main_effect = interactor.split(":")[1]
+    interactor_formula_variants = [main_effect]
+
+    output = []
+    for variant in interactor_formula_variants:
+        # replace the interactor term in the formula with the variant
+        variant_predictors = (
+            [term for term in intersect_coefficients if term != interactor] + [variant]
+            if isinstance(variant, str)
+            else variant
+        )
+        # conduct the stratified CV r-squared calculation with the formula variant
+        input_model_avg_rsquared = stratified_cv_r2(
+            y, X.loc[:, variant_predictors], stratification_classes
+        )
+
+        # append the results to the output list
+        output.append(
+            {
+                "interactor": interactor,
+                "variant": variant,
+                "avg_r2": input_model_avg_rsquared,
+            }
+        )
+    return output
+
+
+def get_interactor_importance(
+    y: pd.DataFrame,
+    full_X: pd.DataFrame,
+    stratification_classes: np.ndarray,
+    intersect_coefficients: set,
+) -> tuple[float, list[dict[str, Any]]]:
+    """
+    For each interactor in the intersect_coefficients, run test_interactor_importance to
+    compare the variants' avg_rsquared to the input_model_avg_rsquared. If a variant of
+    the interactor term is better, record it in a dictionary. Return the
+    `instersect_coefficient` model's avg R-squared and the dictionary of interaction
+    alternatives that, when that alternative replaces a single interaction term,
+    improves the rsquared.
+
+    :param y: the response variable
+    :param full_X: the full predictor matrix
+    :param stratification_classes: the stratification classes for the data
+    :param intersect_coefficients: the set of coefficients that are determined to be
+        significant, expected to be from either a bootstrap procedure on a LassoCV model
+        on a full partition of the data and the top 10% by perturbed binding, or LassoCV
+        followed by backwards selection by p-value significance.
+    :return: a tuple with the first element being the input_model_avg_rsquared and the
+        second element being a list of dictionaries with keys 'interactor', 'variant',
+        and 'avg_r2'
+
+    """
+
+    input_model_avg_rsquared = stratified_cv_r2(
+        y, full_X.loc[:, list(intersect_coefficients)], stratification_classes
+    )
+
+    # for each interactor in the intersect_coefficients, run test_interactor_importance
+    # compare the variant's avg_rsquared to the input_model_avg_rsquared. Record
+    # the best performing.
+    interactor_results = []
+    for interactor in intersect_coefficients:
+        if ":" in interactor:
+
+            interactor_variant_results = try_interactor_variants(
+                intersect_coefficients,
+                interactor,
+                y=y,
+                X=full_X,
+                stratification_classes=stratification_classes,
+            )
+
+            if interactor_variant_results[0]["avg_r2"] > input_model_avg_rsquared:
+                interactor_results.append(interactor_variant_results[0])
+
+    return input_model_avg_rsquared, interactor_results
+
+
+def select_significant_features(
+    feature_set: set, y: pd.DataFrame, X: pd.DataFrame, p_value_threshold: float
+) -> list:
+    """
+    Select significant features from a given set of predictors using OLS.
+
+    :param feature_set: Set of predictor features to be filtered on.
+    :param y: A DataFrame containing the response data for the perturbed TF.
+    :param X: A DataFrame containing all of the predictor data which we will identify
+        the relevant subset for fitting the model using feature_set
+    :param p_value_threshold: A threshold for qualifying significance for features.
+    :return: List of significant predictors with original names.
+
+    """
+
+    X = X.loc[:, list(feature_set)]
+    # Add in the intercept term
+    X["Intercept"] = 1.0
+    # Fit the OLS model and identify significant features
+    model = sm.OLS(y, X).fit()
+    significant_features = [
+        feature
+        for feature, pval in model.pvalues.items()
+        if pval < p_value_threshold and feature != "Intercept"
+    ]
+
+    return significant_features
+
+
+def backwards_OLS_feature_selection(
+    perturbed_tf: str,
+    intersect_coefficients: set[str],
+    response_df: pd.DataFrame,
+    predictors_df: pd.DataFrame,
+    quantile_thresholds: list[float | None],
+    p_value_thresholds: list[float],
+) -> set[str]:
+    """
+    Perform backward feature selection using OLS to iteratively filter down a set of
+    input features based on multiple quantile and p-value thresholds. This now takes in
+    two sets of identical sizes in which a desired quantile on the data, as well as the
+    corresponding p-value threshold to use on this data are given. This way, it can
+    handle any combination of quantiles and thresholds and perform backwards OLS feature
+    selection on all of them.
+
+    :param perturbed_tf: The name of the response TF.
+    :param intersect_coefficients: The initial intersected set of predictor features
+        passed in from Step 2.
+    :param response_df: A DataFrame containing the response data for the response TF.
+    :param predictors_df: A DataFrame containing the predictor data for the response TF.
+    :param quantile_thresholds: A list of quantile thresholds to filter the data.
+        Each value should be a float between 0 and 1, or None for no filtering.
+    :param p_value_thresholds: A list of corresponding p-value thresholds for each
+        quantile. The length must match `quantile_thresholds`.
+
+    :return: The final refined set of significant predictors.
+
+    :raises ValueError: If `quantile_thresholds` and `p_value_thresholds` are not the
+        same length.
+
+    """
+    # Ensure input lists are of the same length
+    if len(quantile_thresholds) != len(p_value_thresholds):
+        raise ValueError(
+            "quantile_thresholds and p_value_thresholds must have the same length."
+        )
+
+    curr_feature_set = intersect_coefficients
+
+    for quantile, p_value_threshold in zip(quantile_thresholds, p_value_thresholds):
+        # Generate modeling data for the current quantile
+        y, X = generate_modeling_data(
+            perturbed_tf,
+            response_df,
+            predictors_df,
+            quantile_threshold=quantile,
+            drop_intercept=True,
+        )
+
+        y = y.add_suffix("_LRR")
+
+        # Adding the max_lrb column to the data
+        X["max_lrb"] = predictors_df.drop(columns=perturbed_tf).max(axis=1)
+
+        # Initialize variables for the while loop
+        prev_set_size = 0
+        curr_set_size = len(curr_feature_set)
+
+        # Perform iterative feature selection
+        while curr_set_size != prev_set_size and curr_set_size > 0:
+            curr_feature_set = set(
+                select_significant_features(
+                    curr_feature_set,
+                    y,
+                    X,
+                    p_value_threshold=p_value_threshold,
+                )
+            )
+            prev_set_size = curr_set_size
+            curr_set_size = len(curr_feature_set)
+
+    return curr_feature_set

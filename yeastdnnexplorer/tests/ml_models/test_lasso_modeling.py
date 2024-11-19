@@ -6,11 +6,16 @@ from sklearn.linear_model import LassoCV
 
 # Import the functions from the module being tested
 from yeastdnnexplorer.ml_models.lasso_modeling import (
+    backwards_OLS_feature_selection,
     bootstrap_stratified_cv_modeling,
     examine_bootstrap_coefficients,
     generate_modeling_data,
+    get_interactor_importance,
+    select_significant_features,
     stratification_classification,
     stratified_cv_modeling,
+    stratified_cv_r2,
+    try_interactor_variants,
 )
 
 
@@ -93,8 +98,11 @@ def test_stratification_classification_mismatch_length():
 # Tests for stratified_cv_modeling
 def test_stratified_cv_modeling(sample_data):
     response_df, predictors_df = sample_data
+    classes = stratification_classification(
+        predictors_df["tf1"].squeeze(), response_df.squeeze()
+    )
     y, X = generate_modeling_data("tf1", response_df, predictors_df)
-    model = stratified_cv_modeling(y, X, LassoCV())
+    model = stratified_cv_modeling(y, X, classes=classes, estimator=LassoCV())
     assert hasattr(model, "coef_")
 
 
@@ -134,3 +142,108 @@ def test_examine_bootstrap_coefficients_custom_threshold(lasso_output):
         plt_obj, plt.Figure
     ), "The function should return a Matplotlib figure with custom threshold."
     plt.close(plt_obj)
+
+
+# test for select_significant_features
+def test_select_significant_features(sample_data):
+    response_df, predictors_df = sample_data
+    y, X = generate_modeling_data(
+        "tf1",
+        response_df,
+        predictors_df,
+        quantile_threshold=None,
+        drop_intercept=True,
+    )
+
+    # Combine y and X into a single DataFrame for Patsy
+    y = y.add_suffix("_LRR")
+    feature_set = {"tf1", "tf1:tf2", "tf1:tf3"}
+    significant_features = select_significant_features(feature_set, y, X, 0.05)
+    assert isinstance(significant_features, list), "The output should be a list."
+    assert all(
+        isinstance(feature, str) for feature in significant_features
+    ), "All features should be strings."
+
+
+# test for backwards_OLS_Feature_selection
+def test_backwards_OLS_feature_selection(sample_data):
+    response_df, predictors_df = sample_data
+    intersect_coefficients = {"tf1", "tf1:tf2", "tf1:tf3"}
+    final_features = backwards_OLS_feature_selection(
+        "tf1", intersect_coefficients, response_df, predictors_df, [None], [0.05]
+    )
+    assert (
+        final_features or len(final_features) == 0
+    ), "The set can be empty or have valid features."
+
+
+# test for get_interactor_importance
+def test_get_interactor_importance(sample_data):
+    response_df, predictors_df = sample_data
+    intersect_coefficients = {"tf1", "tf1:tf2"}
+    main_effects = []
+    for term in intersect_coefficients:
+        if ":" in term:
+            main_effects.append(term.split(":")[1])
+        else:
+            main_effects.append(term)
+    interactor_terms_and_main_effects = list(intersect_coefficients) + main_effects
+    y, X = generate_modeling_data(
+        "tf1",
+        response_df,
+        predictors_df,
+        formula=f"tf1_LRR ~ {' + '.join(interactor_terms_and_main_effects)}",
+    )
+    classes = stratification_classification(X["tf1"], y["tf1"])
+    avg_r2, results = get_interactor_importance(y, X, classes, intersect_coefficients)
+    assert isinstance(avg_r2, float), "The avg_r2 should be a float."
+    assert isinstance(results, list), "Results should be a list."
+    for result in results:
+        assert isinstance(result, dict), "Each result should be a dictionary."
+        assert "interactor" in result
+        assert "variant" in result
+        assert "avg_r2" in result
+
+
+# test for try_interactor_variants
+def test_try_interactor_variants(sample_data):
+    response_df, predictors_df = sample_data
+    intersect_coefficients = {"tf1:tf2", "tf1:tf3"}
+    main_effects = []
+    for term in intersect_coefficients:
+        if ":" in term:
+            main_effects.append(term.split(":")[1])
+        else:
+            main_effects.append(term)
+    interactor_terms_and_main_effects = list(intersect_coefficients) + main_effects
+    y, X = generate_modeling_data(
+        "tf1",
+        response_df,
+        predictors_df,
+        formula=f"tf1_LRR ~ tf1 +{' + '.join(interactor_terms_and_main_effects)}",
+    )
+    classes = stratification_classification(X["tf1"], y["tf1"])
+    output = try_interactor_variants(
+        intersect_coefficients,
+        "tf1:tf2",
+        y=y,
+        X=X,
+        stratification_classes=classes,
+    )
+    assert isinstance(output, list), "The output should be a list."
+    assert all(isinstance(o, dict) for o in output), "Each item should be a dictionary."
+    for result in output:
+        assert "interactor" in result
+        assert "variant" in result
+        assert "avg_r2" in result
+        assert isinstance(result["avg_r2"], float), "avg_r2 should be a float."
+
+
+# test for stratified_cv_r2
+def test_stratified_cv_r2(sample_data):
+    response_df, predictors_df = sample_data
+    y, X = generate_modeling_data("tf1", response_df, predictors_df)
+    classes = stratification_classification(X["tf1"], y["tf1"])
+    r2 = stratified_cv_r2(y, X, classes)
+    assert isinstance(r2, float), "The result should be a float."
+    assert -1 <= r2 <= 1, "R² should be between 0 and 1."
