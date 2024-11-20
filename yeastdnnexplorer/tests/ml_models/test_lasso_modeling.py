@@ -6,12 +6,11 @@ from sklearn.linear_model import LassoCV
 
 # Import the functions from the module being tested
 from yeastdnnexplorer.ml_models.lasso_modeling import (
-    backwards_OLS_feature_selection,
+    OLSFeatureSelector,
     bootstrap_stratified_cv_modeling,
     examine_bootstrap_coefficients,
     generate_modeling_data,
     get_interactor_importance,
-    select_significant_features,
     stratification_classification,
     stratified_cv_modeling,
     stratified_cv_r2,
@@ -155,27 +154,6 @@ def test_select_significant_features(sample_data):
         drop_intercept=True,
     )
 
-    # Combine y and X into a single DataFrame for Patsy
-    y = y.add_suffix("_LRR")
-    feature_set = {"tf1", "tf1:tf2", "tf1:tf3"}
-    significant_features = select_significant_features(feature_set, y, X, 0.05)
-    assert isinstance(significant_features, list), "The output should be a list."
-    assert all(
-        isinstance(feature, str) for feature in significant_features
-    ), "All features should be strings."
-
-
-# test for backwards_OLS_Feature_selection
-def test_backwards_OLS_feature_selection(sample_data):
-    response_df, predictors_df = sample_data
-    intersect_coefficients = {"tf1", "tf1:tf2", "tf1:tf3"}
-    final_features = backwards_OLS_feature_selection(
-        "tf1", intersect_coefficients, response_df, predictors_df, [None], [0.05]
-    )
-    assert (
-        final_features or len(final_features) == 0
-    ), "The set can be empty or have valid features."
-
 
 # test for get_interactor_importance
 def test_get_interactor_importance(sample_data):
@@ -247,3 +225,90 @@ def test_stratified_cv_r2(sample_data):
     r2 = stratified_cv_r2(y, X, classes)
     assert isinstance(r2, float), "The result should be a float."
     assert -1 <= r2 <= 1, "R² should be between 0 and 1."
+
+
+def test_ols_feature_selector_fit():
+    # Create sample data
+    np.random.seed(42)
+    X = pd.DataFrame(
+        {
+            "feature1": np.random.rand(100),
+            "feature2": np.random.rand(100),
+            "feature3": np.random.rand(100),
+        }
+    )
+    y = 2 * X["feature1"] + 3 * X["feature3"] + np.random.rand(100) * 0.1
+
+    # Initialize selector
+    selector = OLSFeatureSelector(p_value_threshold=0.05)
+
+    # Fit the selector
+    selector.fit(X, y)
+
+    # Check that the significant features include "feature1"
+    assert "feature2" not in selector.get_significant_features()
+
+    # Check that the summary is not None
+    summary = selector.get_summary()
+    assert summary is not None
+    assert "pvalue" in summary.columns
+
+
+def test_ols_feature_selector_transform():
+    # Create sample data
+    np.random.seed(42)
+    X = pd.DataFrame(
+        {
+            "feature1": np.random.rand(100),
+            "feature2": np.random.rand(100),
+            "feature3": np.random.rand(100),
+        }
+    )
+    y = 2 * X["feature1"] + 3 * X["feature3"] + np.random.rand(100) * 0.1
+
+    # Initialize and fit selector
+    selector = OLSFeatureSelector(p_value_threshold=0.05)
+    selector.fit(X, y)
+
+    # Transform X
+    X_transformed = selector.transform(X)
+
+    # Check that the transformed X contains only significant features
+    assert X_transformed.shape[1] == len(selector.get_significant_features())
+    assert "feature2" not in X_transformed.columns
+
+
+def test_ols_feature_selector_refine_features():
+    # Create sample data
+    np.random.seed(42)
+    X = pd.DataFrame(
+        {
+            "feature1": np.random.rand(100),
+            "feature2": np.random.rand(100),
+            "feature3": np.random.rand(100),
+        }
+    )
+    y = 2 * X["feature1"] + 3 * X["feature3"] + np.random.rand(100) * 0.1
+
+    # Initialize selector
+    selector = OLSFeatureSelector(p_value_threshold=0.05)
+
+    # Refine features
+    refined_X = selector.refine_features(X, y)
+
+    # Check that the refined X contains only significant features
+    assert refined_X.shape[1] == len(selector.get_significant_features())
+    assert "feature2" not in refined_X.columns
+
+
+def test_ols_feature_selector_errors():
+    # Initialize selector
+    selector = OLSFeatureSelector(p_value_threshold=0.05)
+
+    # Test transform before fit
+    with pytest.raises(ValueError, match="The model has not been fitted yet"):
+        selector.transform(pd.DataFrame({"feature1": [1, 2, 3]}))
+
+    # Test get_summary before fit
+    with pytest.raises(ValueError, match="The model has not been fitted yet"):
+        selector.get_summary()
