@@ -352,7 +352,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     os.makedirs(intersection_dir, exist_ok=True)
 
     intersection_path = os.path.join(
-        intersection_dir, f"{args.response_tf}_intersection.json"
+        output_dirpath, "intersection.json"
     )
     with open(intersection_path, "w") as f:
         json.dump(list(lasso_intersect_coefs), f, indent=4)
