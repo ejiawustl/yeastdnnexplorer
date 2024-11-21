@@ -349,7 +349,6 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         final_features = lasso_intersect_coefs
 
     # Save the intersection coefficients as a dictionary
-    intersection_dir = os.path.join(output_dirpath, f"intersections_{args.response_tf}")
     os.makedirs(intersection_dir, exist_ok=True)
 
     intersection_path = os.path.join(
