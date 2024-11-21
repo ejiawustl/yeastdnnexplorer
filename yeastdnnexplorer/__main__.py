@@ -245,7 +245,6 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     # Save the results from bootstrapping for further analysis
     if args.method == "bootstrap_lassocv":
         # Use the response TF name to differentiate directories
-        os.makedirs(bootstrap_results_dir, exist_ok=True)
 
         # Save "all" results
         ci_dict_all = lasso_res["all"]["ci_dict"]
