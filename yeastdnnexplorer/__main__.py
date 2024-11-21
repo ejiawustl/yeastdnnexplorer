@@ -2,11 +2,13 @@ import argparse
 import json
 import logging
 import os
+import random
 import re
 import time
 from typing import Literal
 
 import joblib
+import numpy as np
 import pandas as pd
 from shiny import run_app
 from sklearn.linear_model import LassoCV
@@ -24,6 +26,10 @@ from yeastdnnexplorer.ml_models.lasso_modeling import (
 from yeastdnnexplorer.utils import LogLevel, configure_logger
 
 logger = logging.getLogger("main")
+
+# set seeds for reproduciblity
+random.seed(42)
+np.random.seed(42)
 
 
 def configure_logging(
@@ -236,6 +242,54 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         ),
     }
 
+    # Save the results from bootstrapping for further analysis
+    if args.method == "bootstrap_lassocv":
+        # Use the response TF name to differentiate directories
+        bootstrap_results_dir = os.path.join(
+            output_dirpath, f"bootstrap_results_{args.response_tf}"
+        )
+        os.makedirs(bootstrap_results_dir, exist_ok=True)
+
+        # Save "all" results
+        ci_dict_all = lasso_res["all"]["ci_dict"]
+        ci_dict_all_path = os.path.join(bootstrap_results_dir, "ci_dict_all.json")
+        with open(ci_dict_all_path, "w") as f:
+            json.dump(ci_dict_all, f, indent=4)
+
+        bootstrap_coef_df_all = pd.DataFrame(lasso_res["all"]["bootstrap_coef_df"])
+        bootstrap_coef_df_all_path = os.path.join(
+            bootstrap_results_dir, "bootstrap_coef_df_all.csv"
+        )
+        bootstrap_coef_df_all.to_csv(bootstrap_coef_df_all_path, index=False)
+
+        bootstrap_alphas_all = pd.DataFrame(
+            lasso_res["all"]["bootstrap_alphas"], columns=["alpha"]
+        )
+        bootstrap_alphas_all_path = os.path.join(
+            bootstrap_results_dir, "bootstrap_alphas_all.csv"
+        )
+        bootstrap_alphas_all.to_csv(bootstrap_alphas_all_path, index=False)
+
+        # Save "top" results
+        ci_dict_top = lasso_res["top"]["ci_dict"]
+        ci_dict_top_path = os.path.join(bootstrap_results_dir, "ci_dict_top.json")
+        with open(ci_dict_top_path, "w") as f:
+            json.dump(ci_dict_top, f, indent=4)
+
+        bootstrap_coef_df_top = pd.DataFrame(lasso_res["top"]["bootstrap_coef_df"])
+        bootstrap_coef_df_top_path = os.path.join(
+            bootstrap_results_dir, "bootstrap_coef_df_top.csv"
+        )
+        bootstrap_coef_df_top.to_csv(bootstrap_coef_df_top_path, index=False)
+
+        bootstrap_alphas_top = pd.DataFrame(
+            lasso_res["top"]["bootstrap_alphas"], columns=["alpha"]
+        )
+        bootstrap_alphas_top_path = os.path.join(
+            bootstrap_results_dir, "bootstrap_alphas_top.csv"
+        )
+        bootstrap_alphas_top.to_csv(bootstrap_alphas_top_path, index=False)
+
     # Ensure lasso_res["all"]["sig_coefs"] and
     # lasso_res["top"]["sig_coefs"] are dictionaries
     all_sig_coefs = lasso_res["all"]["sig_coefs"]
@@ -296,6 +350,16 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
 
     else:
         final_features = lasso_intersect_coefs
+
+    # Save the intersection coefficients as a dictionary
+    intersection_dir = os.path.join(output_dirpath, f"intersections_{args.response_tf}")
+    os.makedirs(intersection_dir, exist_ok=True)
+
+    intersection_path = os.path.join(
+        intersection_dir, f"{args.response_tf}_intersection.json"
+    )
+    with open(intersection_path, "w") as f:
+        json.dump(list(lasso_intersect_coefs), f, indent=4)
 
     # Step 3: determine if the interactor predictor is significant compared to its
     # main effect
