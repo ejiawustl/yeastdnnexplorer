@@ -547,7 +547,7 @@ def get_significant_predictors(
     predictors_df: pd.DataFrame,
     add_max_lrb: bool,
     **kwargs: Any,
-) -> dict:
+) -> dict[str, dict | pd.DataFrame | np.ndarray | tuple]:
     """
     This function is used to get the significant predictors for a given TF using one of
     two methods, either the bootstrapped LassoCV, in which case we look for intervals
@@ -568,10 +568,13 @@ def get_significant_predictors(
         are 'quantile_threshold' from generate_modeling_data() and 'ci_percentile' from
         examine_bootstrap_coefficients()
 
-    :return a dictionary with keys 'sig_coefs', 'response', 'classes' where:
+    :return a dictionary with keys 'sig_coefs', 'response', 'classes', and
+        'bootstrap_lasso_output' where:
         - 'sig_coefs' is a dictionary of significant coefficients
         - 'response' is the response variable
         - 'classes' is the stratification classes for the data
+        - 'bootstrap_lasso_output' is the bootstrapping output for intermediate model
+        analysis if the method chosen is 'bootstrap_lassocv', otherwise it will be None
 
     """
     if method not in ["lassocv_ols", "bootstrap_lassocv"]:
@@ -657,10 +660,10 @@ def get_significant_predictors(
         "predictors": X,
         "response": y,
         "classes": stratification_classes,
+        "bootstrap_lasso_output": (
+            bootstrap_lasso_output if method == "bootstrap_lassocv" else None
+        ),
     }
-    # this adds the bootstrap lasso outputs so that we can create our own CIs
-    if method == "bootstrap_lassocv":
-        result["bootstrap_lasso_output"] = bootstrap_lasso_output
 
     return result
 
