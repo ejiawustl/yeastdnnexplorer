@@ -396,7 +396,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         "final_model_avg_r_squared": final_model_avg_r_squared,
     }
 
-    output_path = os.path.join(output_dirpath, f"{args.response_tf}_final_output.json")
+    output_path = os.path.join(output_dirpath, "final_output.json")
     with open(output_path, "w") as f:
         json.dump(output_dict, f, indent=4)
 
