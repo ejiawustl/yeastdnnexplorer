@@ -2,11 +2,13 @@ import argparse
 import json
 import logging
 import os
+import random
 import re
 import time
 from typing import Literal
 
 import joblib
+import numpy as np
 import pandas as pd
 from shiny import run_app
 from sklearn.linear_model import LassoCV
@@ -24,6 +26,10 @@ from yeastdnnexplorer.ml_models.lasso_modeling import (
 from yeastdnnexplorer.utils import LogLevel, configure_logger
 
 logger = logging.getLogger("main")
+
+# set seeds for reproduciblity
+random.seed(42)
+np.random.seed(42)
 
 
 def configure_logging(
@@ -80,7 +86,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     :param args: The parsed command-line arguments.
 
     """
-    output_dirpath = os.path.join(args.output_dir, args.perturbed_tf)
+    output_dirpath = os.path.join(args.output_dir, args.response_tf)
     if os.path.exists(output_dirpath):
         raise FileExistsError(
             f"File {output_dirpath} already exists. "
@@ -101,7 +107,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
 
     # Generate modeling data
     y, X = generate_modeling_data(
-        colname=args.perturbed_tf,
+        colname=args.response_tf,
         response_df=Y_filtered_transformed,
         predictors_df=predictors_df,
         drop_intercept=True,
@@ -138,7 +144,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         lasso_model = stratified_cv_modeling(y, X, classes, lassoCV_estimator)
     except Exception as exc:
         raise RuntimeError(
-            f"Failed to fit the LassoCV model on {args.perturbed_tf}."
+            f"Failed to fit the LassoCV model on {args.response_tf}."
         ) from exc
 
     # Set the alphas of the main estimator for bootstrap consistency
@@ -160,7 +166,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         )
     except Exception as exc:
         raise RuntimeError(
-            f"Failed to run bootstrap modeling on {args.perturbed_tf}."
+            f"Failed to run bootstrap modeling on {args.response_tf}."
         ) from exc
 
     # the lasso_model and bootstrap_output in output_dirpath. boostrap_output is a
@@ -196,13 +202,15 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     :param args: The parsed command-line arguments.
 
     """
-    output_dirpath = args.output_dir
+    output_dirpath = os.path.join(args.output_dir, args.response_tf)
     if os.path.exists(output_dirpath):
         raise FileExistsError(
             f"File {output_dirpath} already exists. "
             "Please specify a different `output_dir`."
         )
     else:
+        os.makedirs(args.output_dir, exist_ok=True)
+        # Ensure the entire output directory path exists
         os.makedirs(output_dirpath, exist_ok=True)
     if not os.path.exists(args.response_file):
         raise FileNotFoundError(f"File {args.response_file} does not exist.")
@@ -235,6 +243,23 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             quantile_threshold=args.data_quantile,
         ),
     }
+
+    # Save the results from bootstrapping for further analysis
+    if args.method == "bootstrap_lassocv":
+        # Iterate through "all" and "top"
+        for suffix, lasso_results in lasso_res.items():
+            # Save ci_dict
+            ci_dict = lasso_results["bootstrap_lasso_output"][0]
+            ci_dict_path = os.path.join(output_dirpath, f"ci_dict_{suffix}.json")
+            with open(ci_dict_path, "w") as f:
+                json.dump(ci_dict, f, indent=4)
+
+            # Save bootstrap_coef_df
+            bootstrap_coef_df = pd.DataFrame(lasso_results["bootstrap_lasso_output"][1])
+            bootstrap_coef_df_path = os.path.join(
+                output_dirpath, f"bootstrap_coef_df_{suffix}.csv"
+            )
+            bootstrap_coef_df.to_csv(bootstrap_coef_df_path, index=False)
 
     # Ensure lasso_res["all"]["sig_coefs"] and
     # lasso_res["top"]["sig_coefs"] are dictionaries
@@ -296,6 +321,12 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
 
     else:
         final_features = lasso_intersect_coefs
+
+    # Save the intersection coefficients as a dictionary
+
+    intersection_path = os.path.join(output_dirpath, "intersection.json")
+    with open(intersection_path, "w") as f:
+        json.dump(list(lasso_intersect_coefs), f, indent=4)
 
     # Step 3: determine if the interactor predictor is significant compared to its
     # main effect
@@ -365,7 +396,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         "final_model_avg_r_squared": final_model_avg_r_squared,
     }
 
-    output_path = os.path.join(args.output_dir, f"{args.response_tf}_output.json")
+    output_path = os.path.join(output_dirpath, f"{args.response_tf}_final_output.json")
     with open(output_path, "w") as f:
         json.dump(output_dict, f, indent=4)
 
