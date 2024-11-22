@@ -86,7 +86,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     :param args: The parsed command-line arguments.
 
     """
-    output_dirpath = os.path.join(args.output_dir, args.perturbed_tf)
+    output_dirpath = os.path.join(args.output_dir, args.response_tf)
     if os.path.exists(output_dirpath):
         raise FileExistsError(
             f"File {output_dirpath} already exists. "
@@ -107,7 +107,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
 
     # Generate modeling data
     y, X = generate_modeling_data(
-        colname=args.perturbed_tf,
+        colname=args.response_tf,
         response_df=Y_filtered_transformed,
         predictors_df=predictors_df,
         drop_intercept=True,
@@ -144,7 +144,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         lasso_model = stratified_cv_modeling(y, X, classes, lassoCV_estimator)
     except Exception as exc:
         raise RuntimeError(
-            f"Failed to fit the LassoCV model on {args.perturbed_tf}."
+            f"Failed to fit the LassoCV model on {args.response_tf}."
         ) from exc
 
     # Set the alphas of the main estimator for bootstrap consistency
@@ -166,7 +166,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         )
     except Exception as exc:
         raise RuntimeError(
-            f"Failed to run bootstrap modeling on {args.perturbed_tf}."
+            f"Failed to run bootstrap modeling on {args.response_tf}."
         ) from exc
 
     # the lasso_model and bootstrap_output in output_dirpath. boostrap_output is a
@@ -202,13 +202,15 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     :param args: The parsed command-line arguments.
 
     """
-    output_dirpath = args.output_dir
+    output_dirpath = os.path.join(args.output_dir, args.response_tf)
     if os.path.exists(output_dirpath):
         raise FileExistsError(
             f"File {output_dirpath} already exists. "
             "Please specify a different `output_dir`."
         )
     else:
+        os.makedirs(args.output_dir, exist_ok=True)
+        # Ensure the entire output directory path exists
         os.makedirs(output_dirpath, exist_ok=True)
     if not os.path.exists(args.response_file):
         raise FileNotFoundError(f"File {args.response_file} does not exist.")
@@ -244,47 +246,20 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
 
     # Save the results from bootstrapping for further analysis
     if args.method == "bootstrap_lassocv":
-        # Use the response TF name to differentiate directories
+        # Iterate through "all" and "top"
+        for suffix, lasso_results in lasso_res.items():
+            # Save ci_dict
+            ci_dict = lasso_results["bootstrap_lasso_output"][0]
+            ci_dict_path = os.path.join(output_dirpath, f"ci_dict_{suffix}.json")
+            with open(ci_dict_path, "w") as f:
+                json.dump(ci_dict, f, indent=4)
 
-        # Save "all" results
-        ci_dict_all = lasso_res["all"]["ci_dict"]
-        ci_dict_all_path = os.path.join(bootstrap_results_dir, "ci_dict_all.json")
-        with open(ci_dict_all_path, "w") as f:
-            json.dump(ci_dict_all, f, indent=4)
-
-        bootstrap_coef_df_all = pd.DataFrame(lasso_res["all"]["bootstrap_coef_df"])
-        bootstrap_coef_df_all_path = os.path.join(
-            bootstrap_results_dir, "bootstrap_coef_df_all.csv"
-        )
-        bootstrap_coef_df_all.to_csv(bootstrap_coef_df_all_path, index=False)
-
-        bootstrap_alphas_all = pd.DataFrame(
-            lasso_res["all"]["bootstrap_alphas"], columns=["alpha"]
-        )
-        bootstrap_alphas_all_path = os.path.join(
-            bootstrap_results_dir, "bootstrap_alphas_all.csv"
-        )
-        bootstrap_alphas_all.to_csv(bootstrap_alphas_all_path, index=False)
-
-        # Save "top" results
-        ci_dict_top = lasso_res["top"]["ci_dict"]
-        ci_dict_top_path = os.path.join(bootstrap_results_dir, "ci_dict_top.json")
-        with open(ci_dict_top_path, "w") as f:
-            json.dump(ci_dict_top, f, indent=4)
-
-        bootstrap_coef_df_top = pd.DataFrame(lasso_res["top"]["bootstrap_coef_df"])
-        bootstrap_coef_df_top_path = os.path.join(
-            bootstrap_results_dir, "bootstrap_coef_df_top.csv"
-        )
-        bootstrap_coef_df_top.to_csv(bootstrap_coef_df_top_path, index=False)
-
-        bootstrap_alphas_top = pd.DataFrame(
-            lasso_res["top"]["bootstrap_alphas"], columns=["alpha"]
-        )
-        bootstrap_alphas_top_path = os.path.join(
-            bootstrap_results_dir, "bootstrap_alphas_top.csv"
-        )
-        bootstrap_alphas_top.to_csv(bootstrap_alphas_top_path, index=False)
+            # Save bootstrap_coef_df
+            bootstrap_coef_df = pd.DataFrame(lasso_results["bootstrap_lasso_output"][1])
+            bootstrap_coef_df_path = os.path.join(
+                output_dirpath, f"bootstrap_coef_df_{suffix}.csv"
+            )
+            bootstrap_coef_df.to_csv(bootstrap_coef_df_path, index=False)
 
     # Ensure lasso_res["all"]["sig_coefs"] and
     # lasso_res["top"]["sig_coefs"] are dictionaries
@@ -349,9 +324,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
 
     # Save the intersection coefficients as a dictionary
 
-    intersection_path = os.path.join(
-        output_dirpath, "intersection.json"
-    )
+    intersection_path = os.path.join(output_dirpath, "intersection.json")
     with open(intersection_path, "w") as f:
         json.dump(list(lasso_intersect_coefs), f, indent=4)
 
@@ -423,7 +396,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         "final_model_avg_r_squared": final_model_avg_r_squared,
     }
 
-    output_path = os.path.join(args.output_dir, f"{args.response_tf}_output.json")
+    output_path = os.path.join(output_dirpath, f"{args.response_tf}_final_output.json")
     with open(output_path, "w") as f:
         json.dump(output_dict, f, indent=4)
 

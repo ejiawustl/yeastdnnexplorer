@@ -547,7 +547,7 @@ def get_significant_predictors(
     predictors_df: pd.DataFrame,
     add_max_lrb: bool,
     **kwargs: Any,
-) -> dict[str, set[str] | pd.DataFrame | np.ndarray]:
+) -> dict:
     """
     This function is used to get the significant predictors for a given TF using one of
     two methods, either the bootstrapped LassoCV, in which case we look for intervals
@@ -652,12 +652,17 @@ def get_significant_predictors(
     else:
         ValueError(f"method {method} not recognized")
 
-    return {
+    result = {
         "sig_coefs": sig_coef_dict,
         "predictors": X,
         "response": y,
         "classes": stratification_classes,
     }
+    # this adds the bootstrap lasso outputs so that we can create our own CIs
+    if method == "bootstrap_lassocv":
+        result["bootstrap_lasso_output"] = bootstrap_lasso_output
+
+    return result
 
 
 def stratified_cv_r2(
