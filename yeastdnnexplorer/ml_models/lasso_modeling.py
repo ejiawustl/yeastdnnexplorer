@@ -574,7 +574,7 @@ def get_significant_predictors(
         - 'response' is the response variable
         - 'classes' is the stratification classes for the data
         - 'bootstrap_lasso_output' is the bootstrapping output for intermediate model
-        analysis if the method chosen is 'bootstrap_lassocv'
+        analysis if the method chosen is 'bootstrap_lassocv', otherwise it will be None
 
     """
     if method not in ["lassocv_ols", "bootstrap_lassocv"]:
