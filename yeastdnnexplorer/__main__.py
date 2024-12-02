@@ -195,6 +195,9 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     bootstrap_alphas.to_csv(bootstrap_alphas_path, index=False)
 
 
+# 12/1: new attempt
+
+
 def find_interactors_workflow(args: argparse.Namespace) -> None:
     """
     Run the find_interactors_workflow with the specified arguments.
@@ -245,6 +248,10 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     }
 
     # Save the results from bootstrapping for further analysis
+    # also perform the sequential processing where we take the
+    # results from "all" and call get_significant_predictors
+    # using only the TFs from these results on the top x% of data
+    # Sequential analysis
     if args.method == "bootstrap_lassocv":
         # Iterate through "all" and "top"
         for suffix, lasso_results in lasso_res.items():
@@ -260,6 +267,60 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
                 output_dirpath, f"bootstrap_coef_df_{suffix}.csv"
             )
             bootstrap_coef_df.to_csv(bootstrap_coef_df_path, index=False)
+        # Get significant predictors from "all" results
+        assert isinstance(lasso_res["all"]["sig_coefs"], dict)
+        significant_predictors_all = list(lasso_res["all"]["sig_coefs"].keys())
+
+        # Build the formula using these predictors
+        response_variable = f"{args.response_tf}_LRR"
+        predictor_variable = re.sub(r"_rep\\d+", "", args.response_tf)
+
+        # Ensure the main effect of the perturbed TF is included
+        formula_terms = significant_predictors_all.copy()
+        if predictor_variable not in formula_terms:
+            formula_terms.insert(0, predictor_variable)
+
+        # Build the formula string
+        formula = f"{response_variable} ~ {' + '.join(formula_terms)}"
+
+        # Add '-1' to the formula if drop_intercept is True
+        formula += " - 1"
+
+        # Run get_significant_predictors with the custom formula
+        sequential_lasso_res = get_significant_predictors(
+            args.method,
+            args.response_tf,
+            response_df,
+            predictors_df,
+            ci_percentile=args.top_ci_percentile,
+            n_bootstraps=args.n_bootstraps,
+            add_max_lrb=True,
+            quantile_threshold=args.data_quantile,
+            formula=formula,  # Pass the formula via kwargs
+        )
+
+        # Rest of the code remains the same...
+        # Store the results under a new directory
+        sequential_output_dir = os.path.join(
+            output_dirpath, "sequential_top_genes_results"
+        )
+        os.makedirs(sequential_output_dir, exist_ok=True)
+
+        # Save ci_dict and bootstrap_coef_df from sequential_lasso_res
+        ci_dict_seq = sequential_lasso_res["bootstrap_lasso_output"][0]
+        ci_dict_seq_path = os.path.join(
+            sequential_output_dir, "ci_dict_sequential.json"
+        )
+        with open(ci_dict_seq_path, "w") as f:
+            json.dump(ci_dict_seq, f, indent=4)
+
+        bootstrap_coef_df_seq = pd.DataFrame(
+            sequential_lasso_res["bootstrap_lasso_output"][1]
+        )
+        bootstrap_coef_df_seq_path = os.path.join(
+            sequential_output_dir, "bootstrap_coef_df_sequential.csv"
+        )
+        bootstrap_coef_df_seq.to_csv(bootstrap_coef_df_seq_path, index=False)
 
     # Ensure lasso_res["all"]["sig_coefs"] and
     # lasso_res["top"]["sig_coefs"] are dictionaries
@@ -399,6 +460,99 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     output_path = os.path.join(output_dirpath, "final_output.json")
     with open(output_path, "w") as f:
         json.dump(output_dict, f, indent=4)
+
+    # If bootstrap_lassocv is the chosen method, need to repeat steps 3 and 4 for the
+    # sequential results
+    if args.method == "bootstrap_lassocv":
+        # Step 3 and 4 for the sequential method
+
+        # Get the significant coefficients from the sequential results
+        sequential_sig_coefs = sequential_lasso_res["sig_coefs"]
+        assert isinstance(sequential_sig_coefs, dict)
+        sequential_final_features = set(sequential_sig_coefs.keys())
+
+        # Save the sequential significant coefficients as a dictionary
+        intersection_seq_path = os.path.join(
+            sequential_output_dir, "intersection_sequential.json"
+        )
+        with open(intersection_seq_path, "w") as f:
+            json.dump(list(sequential_final_features), f, indent=4)
+
+        # Get main effects
+        main_effects_seq = []
+        for term in sequential_final_features:
+            if ":" in term:
+                main_effects_seq.append(term.split(":")[1])
+            else:
+                main_effects_seq.append(term)
+
+        # Combine main effects with final features
+        interactor_terms_and_main_effects_seq = (
+            list(sequential_final_features) + main_effects_seq
+        )
+
+        # Generate model matrix
+        _, full_X_seq = generate_modeling_data(
+            args.response_tf,
+            response_df,
+            predictors_df,
+            formula=f"~ {' + '.join(interactor_terms_and_main_effects_seq)}",
+            drop_intercept=False,
+        )
+
+        # Add max_lrb column
+        full_X_seq["max_lrb"] = max_lrb
+
+        # Use the response and classes from the "all" data (NOT sequential data)
+        response_seq = lasso_res["all"]["response"]
+        classes_seq = lasso_res["all"]["classes"]
+
+        # Step 3: Get interactor importance using "all" data
+        (
+            full_avg_rsquared_seq,
+            interactor_results_seq,
+        ) = get_interactor_importance(
+            response_seq,
+            full_X_seq,
+            classes_seq,
+            sequential_final_features,
+        )
+
+        # Update final features based on interactor results (no change needed here)
+        for interactor_variant in interactor_results_seq:
+            k = interactor_variant["interactor"]
+            v = interactor_variant["variant"]
+            sequential_final_features.remove(k)
+            sequential_final_features.add(v)
+
+        # Step 4: Compare results of final model vs. a univariate model on "all" data
+        assert isinstance(lasso_res["all"]["predictors"], pd.DataFrame)
+        avg_r2_univariate_seq = stratified_cv_r2(
+            response_seq,
+            lasso_res["all"]["predictors"][[model_tf]],
+            classes_seq,
+        )
+
+        final_model_avg_r_squared_seq = stratified_cv_r2(
+            response_seq,
+            full_X_seq[list(sequential_final_features)],
+            classes_seq,
+        )
+
+        # Prepare output dictionary
+        output_dict_seq = {
+            "response_tf": args.response_tf,
+            "final_features": list(sequential_final_features),
+            "avg_r2_univariate": avg_r2_univariate_seq,
+            "final_model_avg_r_squared": final_model_avg_r_squared_seq,
+        }
+
+        # Save the output
+        output_path_seq = os.path.join(
+            sequential_output_dir, "final_output_sequential.json"
+        )
+        with open(output_path_seq, "w") as f:
+            json.dump(output_dict_seq, f, indent=4)
 
 
 class CustomHelpFormatter(argparse.HelpFormatter):
