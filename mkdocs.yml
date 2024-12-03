@@ -51,6 +51,7 @@ nav:
   - Visualizing and Testing Data Generation Methods: tutorials/visualizing_and_testing_data_generation_methods.ipynb
   - Generalized Logistic Models: tutorials/generalized_logistic_models.ipynb
   - LassoCV: tutorials/lassoCV.ipynb
+  - Interactor Modeling Workflow: tutorials/interactor_modeling_workflow.ipynb
 - API:
   - Data Loaders:
     - Synthetic Data Loader: data_loaders/synthetic_data_loader.md
