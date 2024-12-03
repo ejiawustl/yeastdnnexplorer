@@ -6,7 +6,7 @@ from typing import Any
 
 import aiohttp
 import pandas as pd
-from requests import Response  # type: ignore
+import requests  # type: ignore
 
 from yeastdnnexplorer.interface.AbstractRecordsOnlyAPI import AbstractRecordsOnlyAPI
 
@@ -116,11 +116,22 @@ class DtoAPI(AbstractRecordsOnlyAPI):
                     # Wait for the specified polling interval before checking again
                     await asyncio.sleep(polling_interval)
 
-    def create(self, data: dict[str, Any], **kwargs) -> Response:
+    def create(self, data: dict[str, Any], **kwargs) -> requests.Response:
         raise NotImplementedError("The DTO does not support create.")
 
     def update(self, df: pd.DataFrame, **kwargs) -> Any:
         raise NotImplementedError("The DTO does not support update.")
 
     def delete(self, id: str, **kwargs) -> Any:
-        raise NotImplementedError("The DTO does not support delete.")
+        # Include the Authorization header with the token
+        headers = kwargs.get("headers", {})
+        headers["Authorization"] = f"Token {self.token}"
+
+        # Make the DELETE request with the updated headers
+        response = requests.delete(f"{self.url}/{id}/", headers=headers, **kwargs)
+
+        if response.status_code == 204:
+            return {"status": "success", "message": "DTO deleted successfully."}
+
+        # Raise an error if the response indicates failure
+        response.raise_for_status()
