@@ -43,8 +43,9 @@ class AbstractRecordsOnlyAPI(AbstractAPI):
             include `metadata`, `data`, and `cache` as parameters.
         :param export_url_suffix: The URL suffix for the export endpoint. This will
             return a response object with a csv file.
-        :param kwargs: Additional arguments to pass to the callback function.
-        :return: The result of the callback function.
+        :param kwargs: This can be used to pass "params" to the request to use in place
+            of `self.params`. If those are passed, they will be popped off and then
+            the remaining kwargs will be passed to the callback function
 
         """
         if not callable(callback) or {"metadata", "data", "cache"} - set(
@@ -66,7 +67,7 @@ class AbstractRecordsOnlyAPI(AbstractAPI):
                 async with session.get(
                     export_url,
                     headers=self.header,
-                    params=self.params,
+                    params=kwargs.pop("params", self.params),
                 ) as response:
                     response.raise_for_status()
                     content = await response.content.read()

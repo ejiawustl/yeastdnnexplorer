@@ -1,21 +1,17 @@
 import asyncio
 import json
 import os
-import tempfile
 import time
 from typing import Any
 
 import aiohttp
 import pandas as pd
-from requests import Response, post  # type: ignore
-from requests_toolbelt import MultipartEncoder
+from requests import Response  # type: ignore
 
-from yeastdnnexplorer.interface.AbstractRecordsAndFilesAPI import (
-    AbstractRecordsAndFilesAPI,
-)
+from yeastdnnexplorer.interface.AbstractRecordsOnlyAPI import AbstractRecordsOnlyAPI
 
 
-class DtoAPI(AbstractRecordsAndFilesAPI):
+class DtoAPI(AbstractRecordsOnlyAPI):
     """
     A class to interact with the DTO API.
 
@@ -25,8 +21,8 @@ class DtoAPI(AbstractRecordsAndFilesAPI):
 
     def __init__(self, **kwargs) -> None:
         """
-        Initialize the DTO object. This will serve as an interface to the
-        DTO endpoint of both the database and the application cache.
+        Initialize the DTO object. This will serve as an interface to the DTO endpoint
+        of both the database and the application cache.
 
         :param url: The URL of the DTO API
         :param kwargs: Additional parameters to pass to AbstractAPI.
@@ -74,7 +70,7 @@ class DtoAPI(AbstractRecordsAndFilesAPI):
         :param group_task_id: The task ID to retrieve results for.
         :param timeout: The maximum time to wait for the task to complete (in seconds).
         :param polling_interval: The time to wait between status checks (in seconds).
-        :return: Extracted files from the result tarball.
+        :return: Records from the DTO API of the successfully completed task.
 
         """
         # Start time for timeout check
@@ -96,8 +92,14 @@ class DtoAPI(AbstractRecordsAndFilesAPI):
 
                     # Check if the task is complete
                     if status_response.get("status") == "SUCCESS":
-                        # Fetch and return the tarball
-                        return await self._download_result(group_task_id)
+
+                        if error_tasks := status_response.get("error_tasks"):
+                            self.logger.error(
+                                f"Tasks {group_task_id} failed: {error_tasks}"
+                            )
+                        if success_tasks := status_response.get("success_tasks"):
+                            params = {"id": ",".join(success_tasks)}
+                            return await self.read(params=params)
                     elif status_response.get("status") == "FAILURE":
                         raise Exception(
                             f"Task {group_task_id} failed: {status_response}"
@@ -115,49 +117,7 @@ class DtoAPI(AbstractRecordsAndFilesAPI):
                     await asyncio.sleep(polling_interval)
 
     def create(self, data: dict[str, Any], **kwargs) -> Response:
-        """
-        Create a new dto record by uploading a gzipped CSV file.
-
-        :param data: This should be the fields in the dto model, eg
-            "promotersetsig_id", "expression_id" and "parameters".
-        :param kwargs: Additional parameters to pass to the post. This must include a
-            DataFrame to upload as a CSV file with the keyword `df`, eg `df=my_df`.
-
-        :return: The result of the post request.
-
-        :raises ValueError: If a DataFrame is not provided in the keyword arguments.
-        :raises TypeError: If the DataFrame provided is not a pandas DataFrame.
-
-        """
-        # ensure that the url ends in a slash
-        dto_url = f"{self.url.rstrip('/')}/"
-        df = kwargs.pop("df", None)
-
-        if df is None:
-            raise ValueError(
-                "A DataFrame must be provided to create " "a dto via keyword `df`"
-            )
-        if not isinstance(df, pd.DataFrame):
-            raise TypeError(
-                f"Expected a DataFrame for keyword `df`, got {type(df).__name__}"
-            )
-
-        # Create a temporary gzipped CSV file from the DataFrame
-        with tempfile.NamedTemporaryFile(suffix=".csv.gz") as temp_file:
-            df.to_csv(temp_file.name, compression="gzip", index=False)
-
-            # Prepare the file and metadata for upload
-            with open(temp_file.name, "rb") as file:
-                multipart_data = MultipartEncoder(
-                    fields={**data, "file": (temp_file.name, file, "application/gzip")}
-                )
-                headers = {**self.header, "Content-Type": multipart_data.content_type}
-
-                # Send the POST request with custom encoded multipart data
-                response = post(dto_url, headers=headers, data=multipart_data)
-
-        response.raise_for_status()
-        return response
+        raise NotImplementedError("The DTO does not support create.")
 
     def update(self, df: pd.DataFrame, **kwargs) -> Any:
         raise NotImplementedError("The DTO does not support update.")
