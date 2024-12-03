@@ -46,7 +46,15 @@ class DtoAPI(AbstractRecordsOnlyAPI):
             async with session.post(
                 dto_url, headers=self.header, json=post_dict
             ) as response:
-                response.raise_for_status()
+                try:
+                    response.raise_for_status()
+                except aiohttp.ClientResponseError as e:
+                    self.logger.error(
+                        "Failed to submit DTO task: Status %s, Reason %s",
+                        e.status,
+                        e.message,
+                    )
+                    raise
                 result = await response.json()
                 try:
                     return result["group_task_id"]
@@ -97,8 +105,8 @@ class DtoAPI(AbstractRecordsOnlyAPI):
                             self.logger.error(
                                 f"Tasks {group_task_id} failed: {error_tasks}"
                             )
-                        if success_tasks := status_response.get("success_tasks"):
-                            params = {"id": ",".join(success_tasks)}
+                        if success_tasks := status_response.get("success_pks"):
+                            params = {"id": ",".join(str(pk) for pk in success_tasks)}
                             return await self.read(params=params)
                     elif status_response.get("status") == "FAILURE":
                         raise Exception(
