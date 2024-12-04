@@ -76,6 +76,7 @@ nav:
     - Records Only Classes:
       - interface/BindingManualQCAPI.md
       - interface/DataSourceAPI.md
+      - interface/DtoAPI.md
       - interface/ExpressionManualQCAPI.md
       - interface/FileFormatAPI.md
       - interface/GenomicFeatureAPI.md

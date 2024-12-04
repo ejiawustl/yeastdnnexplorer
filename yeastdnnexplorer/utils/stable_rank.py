@@ -1,17 +1,15 @@
-from typing import Union
-
 import numpy as np
 from scipy.stats import rankdata
 
 
 def stable_rank(
     col1: np.ndarray,
-    col2: Union[np.ndarray, None] = None,
+    col2: np.ndarray | None = None,
     col1_ascending: bool = True,
     col2_ascending: bool = True,
     method="average",
 ) -> np.ndarray:
-    """ """
+    """"""
     # Validate inputs
     if not np.issubdtype(col1.dtype, np.number):
         raise ValueError("`col1` must be numeric")

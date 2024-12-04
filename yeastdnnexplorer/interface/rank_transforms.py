@@ -94,8 +94,8 @@ def negative_log_transform_by_pvalue_and_enrichment(
 ) -> np.ndarray:
     """
     This calls the rank() function and then transforms the ranks to negative log10
-    values and shifts to the right such that the lowest value (largest rank,
-    least important) is 0.
+    values and shifts to the right such that the lowest value (largest rank, least
+    important) is 0.
 
     :param pvalue_vector: A vector of pvalues
     :param enrichment_vector: A vector of enrichment values corresponding to the pvalues

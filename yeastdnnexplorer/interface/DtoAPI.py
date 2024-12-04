@@ -38,6 +38,14 @@ class DtoAPI(AbstractRecordsOnlyAPI):
         post_dict: dict[str, Any],
         **kwargs,
     ) -> Any:
+        """
+        Submit a DTO task to the DTO API.
+
+        :param post_dict: The dictionary to submit to the DTO API. The typing needs to
+            be adjusted -- it can take a list of dictionaries to submit a batch.
+        :return: The group_task_id of the submitted task.
+
+        """
         # make a post request with the post_dict to dto_url
         dto_url = f"{self.url.rstrip('/')}/submit/"
         self.logger.debug("dto_url: %s", dto_url)
@@ -131,6 +139,13 @@ class DtoAPI(AbstractRecordsOnlyAPI):
         raise NotImplementedError("The DTO does not support update.")
 
     def delete(self, id: str, **kwargs) -> Any:
+        """
+        Delete a DTO record from the database.
+
+        :param id: The ID of the DTO record to delete.
+        :return: A dictionary with a status message indicating success or failure.
+
+        """
         # Include the Authorization header with the token
         headers = kwargs.get("headers", {})
         headers["Authorization"] = f"Token {self.token}"
