@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 import pandas as pd
-from requests import Response, post  # type: ignore
+from requests import Response, delete, post  # type: ignore
 from requests_toolbelt import MultipartEncoder
 
 from yeastdnnexplorer.interface.AbstractRecordsAndFilesAPI import (
@@ -240,4 +240,25 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
         raise NotImplementedError("The RankResponseAPI does not support update.")
 
     def delete(self, id: str, **kwargs) -> Any:
-        raise NotImplementedError("The RankResponseAPI does not support delete.")
+        """
+        Delete a record from the database.
+
+        :param id: The ID of the record to delete.
+        :return: A dictionary with a status message indicating success or failure.
+
+        """
+        # Include the Authorization header with the token
+        headers = kwargs.get("headers", {})
+        headers["Authorization"] = f"Token {self.token}"
+
+        # Make the DELETE request with the updated headers
+        response = delete(f"{self.url}/{id}/", headers=headers, **kwargs)
+
+        if response.status_code == 204:
+            return {
+                "status": "success",
+                "message": "RankResponse deleted successfully.",
+            }
+
+        # Raise an error if the response indicates failure
+        response.raise_for_status()
