@@ -41,6 +41,7 @@ class PromoterSetSigAPI(AbstractRecordsAndFilesAPI):
                 "aggregated",
                 "condition",
                 "deduplicate",
+                "preferred_replicate",
             ],
         )
 

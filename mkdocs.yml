@@ -82,11 +82,12 @@ nav:
       - interface/GenomicFeatureAPI.md
       - interface/RegulatorAPI.md
     - Records and Files Classes:
-      - interface/BindingAPI.md
-      - interface/CallingCardsBackgroundAPI.md
-      - interface/ExpressionAPI.md
-      - interface/PromoterSetAPI.md
-      - interface/PromoterSetSigAPI.md
+      - BindingAPI: interface/BindingAPI.md
+      - BindingConcatenatedAPI: interface/BindingConcatenatedAPI.md
+      - CallingCardsBackgroundAPI: interface/CallingCardsBackgroundAPI.md
+      - ExpressionAPI: interface/ExpressionAPI.md
+      - PromoterSetAPI: interface/PromoterSetAPI.md
+      - PromoterSetSigAPI: interface/PromoterSetSigAPI.md
     - Developer Classes:
       - interface/AbstractAPI.md
       - interface/AbstractRecordsAndFilesAPI.md
