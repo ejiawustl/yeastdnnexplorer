@@ -208,12 +208,10 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     output_dirpath = os.path.join(args.output_dir, args.response_tf)
     if os.path.exists(output_dirpath):
         raise FileExistsError(
-            f"File {output_dirpath} already exists. "
+            f"Directory {output_dirpath} already exists. "
             "Please specify a different `output_dir`."
         )
     else:
-        os.makedirs(args.output_dir, exist_ok=True)
-        # Ensure the entire output directory path exists
         os.makedirs(output_dirpath, exist_ok=True)
     if not os.path.exists(args.response_file):
         raise FileNotFoundError(f"File {args.response_file} does not exist.")
