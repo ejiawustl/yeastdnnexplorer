@@ -589,6 +589,7 @@ def get_significant_predictors(
         predictors_df,
         quantile_threshold=kwargs.get("quantile_threshold", None),
         drop_intercept=True,
+        formula=kwargs.get("formula", None),  # Pass formula from kwargs
     )
 
     # NOTE: fit_intercept is set to `true`
