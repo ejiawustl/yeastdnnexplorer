@@ -2,6 +2,7 @@ from .BindingAPI import BindingAPI
 from .BindingManualQCAPI import BindingManualQCAPI
 from .CallingCardsBackgroundAPI import CallingCardsBackgroundAPI
 from .DataSourceAPI import DataSourceAPI
+from .DtoAPI import DtoAPI
 from .ExpressionAPI import ExpressionAPI
 from .ExpressionManualQCAPI import ExpressionManualQCAPI
 from .FileFormatAPI import FileFormatAPI
@@ -12,6 +13,7 @@ from .PromoterSetSigAPI import PromoterSetSigAPI
 from .rank_transforms import (
     negative_log_transform_by_pvalue_and_enrichment,
     shifted_negative_log_ranks,
+    stable_rank,
 )
 from .RankResponseAPI import RankResponseAPI
 from .RegulatorAPI import RegulatorAPI
@@ -21,6 +23,7 @@ __all__ = [
     "BindingManualQCAPI",
     "CallingCardsBackgroundAPI",
     "DataSourceAPI",
+    "DtoAPI",
     "ExpressionAPI",
     "ExpressionManualQCAPI",
     "FileFormatAPI",
@@ -31,5 +34,6 @@ __all__ = [
     "PromoterSetSigAPI",
     "RankResponseAPI",
     "RegulatorAPI",
+    "stable_rank",
     "shifted_negative_log_ranks",
 ]
