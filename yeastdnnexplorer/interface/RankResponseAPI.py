@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 import pandas as pd
-from requests import Response, post  # type: ignore
+from requests import Response, delete, post  # type: ignore
 from requests_toolbelt import MultipartEncoder
 
 from yeastdnnexplorer.interface.AbstractRecordsAndFilesAPI import (
@@ -239,5 +239,48 @@ class RankResponseAPI(AbstractRecordsAndFilesAPI):
     def update(self, df: pd.DataFrame, **kwargs) -> Any:
         raise NotImplementedError("The RankResponseAPI does not support update.")
 
-    def delete(self, id: str, **kwargs) -> Any:
-        raise NotImplementedError("The RankResponseAPI does not support delete.")
+    def delete(self, id: str = "", **kwargs) -> Any:
+        """
+        Delete one or more records from the database.
+
+        :param id: The ID of the record to delete. However, you can also pass in
+        `ids` as a list of IDs to delete multiple records. This is why `id` is optional.
+        If neither `id` nor `ids` is provided, a ValueError is raised.
+
+        :return: A dictionary with a status message indicating success or failure.
+
+        :raises ValueError: If neither `id` nor `ids` is provided.
+
+        """
+        # Include the Authorization header with the token
+        headers = kwargs.get("headers", {})
+        headers["Authorization"] = f"Token {self.token}"
+
+        ids = kwargs.pop("ids", str(id))
+
+        # Determine if it's a single ID or multiple
+        if isinstance(ids, str) and str != "":
+            # Single ID deletion for backward compatibility
+            response = delete(f"{self.url}/{ids}/", headers=headers, **kwargs)
+        elif isinstance(ids, list) and ids:
+            # Bulk delete with a list of IDs
+            response = delete(
+                f"{self.url}/delete/",
+                headers=headers,
+                json={"ids": ids},  # Send the list of IDs in the request body
+                **kwargs,
+            )
+        else:
+            raise ValueError(
+                "No ID(s) provided for deletion. Either pass a single ID with "
+                "`id` or a list of IDs with `ids = [1,2, ...]"
+            )
+
+        if response.status_code in [200, 204]:
+            return {
+                "status": "success",
+                "message": "RankResponse(s) deleted successfully.",
+            }
+
+        # Raise an error if the response indicates failure
+        response.raise_for_status()

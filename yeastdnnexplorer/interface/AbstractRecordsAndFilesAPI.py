@@ -136,6 +136,9 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         :param retrieve_files: Boolean. Whether to retrieve the files associated with
             the records. Defaults to False.
         :type retrieve_files: bool
+        :param kwargs: The following kwargs are used by the read() function. Any
+            others are passed onto the callback function
+            - timeout: The timeout for the GET request. Defaults to 120.
 
         :return: The result of the callback function.
         :rtype: Any
@@ -157,7 +160,8 @@ class AbstractRecordsAndFilesAPI(AbstractAPI):
         export_url = f"{self.url.rstrip('/')}/{self.export_url_suffix}"
         self.logger.debug("read() export_url: %s", export_url)
 
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(kwargs.pop("timeout", 120))
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             try:
                 async with session.get(
                     export_url, headers=self.header, params=self.params

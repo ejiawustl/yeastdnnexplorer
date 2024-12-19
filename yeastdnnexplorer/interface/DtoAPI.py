@@ -28,6 +28,11 @@ class DtoAPI(AbstractRecordsOnlyAPI):
         :param kwargs: Additional parameters to pass to AbstractAPI.
 
         """
+
+        self.bulk_update_url_suffix = kwargs.pop(
+            "bulk_update_url_suffix", "bulk-update"
+        )
+
         super().__init__(
             url=kwargs.pop("url", os.getenv("DTO_URL", "")),
             **kwargs,
@@ -135,8 +140,40 @@ class DtoAPI(AbstractRecordsOnlyAPI):
     def create(self, data: dict[str, Any], **kwargs) -> requests.Response:
         raise NotImplementedError("The DTO does not support create.")
 
-    def update(self, df: pd.DataFrame, **kwargs) -> Any:
-        raise NotImplementedError("The DTO does not support update.")
+    def update(self, df: pd.DataFrame, **kwargs: Any) -> requests.Response:
+        """
+        Update the records in the database.
+
+        :param df: The DataFrame containing the records to update.
+        :type df: pd.DataFrame
+        :param kwargs: Additional fields to include in the payload.
+        :type kwargs: Any
+        :return: The response from the POST request.
+        :rtype: requests.Response
+        :raises requests.RequestException: If the request fails.
+
+        """
+        bulk_update_url = (
+            f"{self.url.rstrip('/')}/{self.bulk_update_url_suffix.rstrip('/')}/"
+        )
+
+        self.logger.debug("bulk_update_url: %s", bulk_update_url)
+
+        # Include additional fields in the payload if provided
+        payload = {"data": df.to_dict(orient="records")}
+        payload.update(kwargs)
+
+        try:
+            response = requests.post(
+                bulk_update_url,
+                headers=self.header,
+                json=payload,
+            )
+            response.raise_for_status()
+            return response
+        except requests.RequestException as e:
+            self.logger.error(f"Error in POST request: {e}")
+            raise
 
     def delete(self, id: str, **kwargs) -> Any:
         """

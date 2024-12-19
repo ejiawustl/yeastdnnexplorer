@@ -1,4 +1,5 @@
 from .BindingAPI import BindingAPI
+from .BindingConcatenatedAPI import BindingConcatenatedAPI
 from .BindingManualQCAPI import BindingManualQCAPI
 from .CallingCardsBackgroundAPI import CallingCardsBackgroundAPI
 from .DataSourceAPI import DataSourceAPI
@@ -20,6 +21,7 @@ from .RegulatorAPI import RegulatorAPI
 
 __all__ = [
     "BindingAPI",
+    "BindingConcatenatedAPI",
     "BindingManualQCAPI",
     "CallingCardsBackgroundAPI",
     "DataSourceAPI",
