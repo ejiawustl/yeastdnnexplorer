@@ -372,8 +372,9 @@ def bootstrap_stratified_cv_modeling(
             X_resampled.loc[:, response_tf].squeeze(), Y_resampled.squeeze()
         )
 
-        # this is the second part of the code for the edge case in which during sequential modeling we do not find the main effect
-        # to be significant in the first place, therefore we must ignore it for modeling purposes
+        # this is the second part of the code for the edge case in which during
+        # sequential modeling we do not find the main effect to be significant
+        # in the first place, therefore we must ignore it for modeling purposes
         ignore_main_effects = kwargs.get("ignore_main_effect", False)
         if ignore_main_effects:
             X_resampled = X_resampled.drop([response_tf], axis=1)
@@ -391,7 +392,8 @@ def bootstrap_stratified_cv_modeling(
     # Convert coefficients list to a DataFrame with column names from X
     bootstrap_coefs_df = pd.DataFrame(
         bootstrap_coefs,
-        # this is the fourth part of the code that handles the edge case where you drop the main effect if needed
+        # this is the fourth part of the code that handles the edge case where you drop
+        # the main effect if needed
         columns=(
             X.drop(columns=[response_tf]).columns if ignore_main_effects else X.columns
         ),
@@ -592,8 +594,9 @@ def get_significant_predictors(
             "Must be one of ['lassocv_ols', 'bootstrap_lassocv']"
         )
 
-    # this is the first part of the code that checks for the edge case in which the main effect isn't in the formula
-    # if it is not there, then we must add it when generating the modeling data, and then ignore it for the actual modeling which
+    # this is the first part of the code that checks for the edge case in which the main
+    # effect isn't in the formula if it is not there, then we must add it when
+    # generating the modeling data, and then ignore it for the actual modeling which
     # is done by the other part of the code in this method and in bootstrap_cv_modeling
     formula = kwargs.get("formula", None)
     if formula:
