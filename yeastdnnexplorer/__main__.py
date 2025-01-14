@@ -271,18 +271,12 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
 
         # Build the formula using these predictors
         response_variable = f"{args.response_tf}_LRR"
-        # predictor_variable = re.sub(r"_rep\\d+", "", args.response_tf)
 
         # Ensure the main effect of the perturbed TF is included
         formula_terms = significant_predictors_all.copy()
-        # if predictor_variable not in formula_terms:
-        #     formula_terms.insert(0, predictor_variable)
 
         # Build the formula string
         formula = f"{response_variable} ~ {' + '.join(formula_terms)}"
-
-        # Add '-1' to the formula if drop_intercept is True
-        # formula += " - 1"
 
         # Run get_significant_predictors with the custom formula
         sequential_lasso_res = get_significant_predictors(
