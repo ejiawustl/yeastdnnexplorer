@@ -10,7 +10,7 @@ import patsy as pt
 import seaborn as sns
 from matplotlib.figure import Figure
 from sklearn.base import BaseEstimator, TransformerMixin, clone
-from sklearn.linear_model import LassoCV, LinearRegression
+from sklearn.linear_model import ElasticNetCV, LinearRegression
 from sklearn.metrics import r2_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils import resample
@@ -213,12 +213,12 @@ def stratified_cv_modeling(
     y: pd.DataFrame,
     X: pd.DataFrame,
     classes: np.ndarray,
-    estimator: BaseEstimator = LassoCV(),
+    estimator: BaseEstimator = ElasticNetCV(),
     skf: StratifiedKFold = StratifiedKFold(n_splits=4, shuffle=True, random_state=42),
     sample_weight: np.ndarray | None = None,
 ) -> BaseEstimator:
     """
-    This conducts the LassoCV modeling. The name `stratified_cv_modeling` is a misnomer.
+    This conducts the ElasticNetCV modeling. The name `stratified_cv_modeling` is a misnomer.
     There is nothing in this function that requires any specific model.
 
     :param y: The response variable to use for modeling. This should be a single column.
@@ -232,9 +232,9 @@ def stratified_cv_modeling(
     :param skf: The StratifiedKFold object to use for stratified splits. Default is
         StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
     :param sample_weight: The sample weights to use for fitting the model. Default is
-        None, which is the default behavior for LassoCV.fit()
+        None, which is the default behavior for ElasticNetCV.fit()
 
-    :return: The LassoCV model
+    :return: The ElasticNetCV model
 
     :raises ValueError: if y is not a single column DataFrame
     :raises ValueError: if X is not a DataFrame with 1 or more columns, or the number
@@ -552,7 +552,7 @@ def examine_bootstrap_coefficients(
 
 
 def get_significant_predictors(
-    method: Literal["lassocv_ols", "bootstrap_lassocv"],
+    method: Literal["ElasticNetCV_ols", "bootstrap_ElasticNetCV"],
     perturbed_tf: str,
     response_df: pd.DataFrame,
     predictors_df: pd.DataFrame,
@@ -561,13 +561,13 @@ def get_significant_predictors(
 ) -> dict[str, dict | pd.DataFrame | np.ndarray | tuple]:
     """
     This function is used to get the significant predictors for a given TF using one of
-    two methods, either the bootstrapped LassoCV, in which case we look for intervals
-    that do not cross 0, or direct LassoCV with a selection on non-zero coefficients.
+    two methods, either the bootstrapped ElasticNetCV, in which case we look for intervals
+    that do not cross 0, or direct ElasticNetCV with a selection on non-zero coefficients.
 
-    :param method: This must be 'lassocv_ols', which will conduct a single lassocv call
+    :param method: This must be 'ElasticNetCV_ols', which will conduct a single ElasticNetCV call
         followed by pruning non zero coefficients by pvalue until all are significant
-        at a given threshold, or 'bootstrap_lassocv', which will conduct bootstrapped
-        lassoCV and return only coefficients which are deemed significant by
+        at a given threshold, or 'bootstrap_ElasticNetCV', which will conduct bootstrapped
+        ElasticNetCV and return only coefficients which are deemed significant by
         ci_percentile and threshold (see `examine_bootstrap_coeficients` for more info)
     :param perturbed_tf: the TF for which the significant predictors are to be
         identified
@@ -585,13 +585,13 @@ def get_significant_predictors(
         - 'response' is the response variable
         - 'classes' is the stratification classes for the data
         - 'bootstrap_lasso_output' is the bootstrapping output for intermediate model
-        analysis if the method chosen is 'bootstrap_lassocv', otherwise it will be None
+        analysis if the method chosen is 'bootstrap_ElasticNetCV', otherwise it will be None
 
     """
-    if method not in ["lassocv_ols", "bootstrap_lassocv"]:
+    if method not in ["ElasticNetCV_ols", "bootstrap_ElasticNetCV"]:
         raise ValueError(
             "method {} unrecognized. "
-            "Must be one of ['lassocv_ols', 'bootstrap_lassocv']"
+            "Must be one of ['ElasticNetCV_ols', 'bootstrap_ElasticNetCV']"
         )
 
     # this is the first part of the code that checks for the edge case in which the main
@@ -617,7 +617,7 @@ def get_significant_predictors(
     )
 
     # NOTE: fit_intercept is set to `true`
-    lassoCV_estimator = LassoCV(
+    ElasticNetCV_estimator = ElasticNetCV(
         fit_intercept=True,
         max_iter=10000,
         selection="random",
@@ -640,10 +640,10 @@ def get_significant_predictors(
     # Fit the model to the data in order to extract the alphas_ which are generated
     # during the fitting process
     lasso_model = stratified_cv_modeling(
-        y, X, stratification_classes, lassoCV_estimator
+        y, X, stratification_classes, ElasticNetCV_estimator
     )
 
-    if method == "lassocv_ols":
+    if method == "ElasticNetCV_ols":
         # return a list of the non-zero features that survived the fitting
         non_zero_indices = lasso_model.coef_ != 0
         non_zero_features = X.columns[non_zero_indices]
@@ -651,12 +651,12 @@ def get_significant_predictors(
             k: v for k, v in zip(non_zero_features, lasso_model.coef_[non_zero_indices])
         }
 
-    elif method == "bootstrap_lassocv":
+    elif method == "bootstrap_ElasticNetCV":
 
-        # set the alphas_ attribute of the lassoCV_estimator to the alphas_
+        # set the alphas_ attribute of the ElasticNetCV_estimator to the alphas_
         # attribute of the lasso_model fit on the whole data. This will allow the
         # bootstrap_stratified_cv_modeling function to use the same set of lambdas
-        lassoCV_estimator.alphas_ = lasso_model.alphas_
+        ElasticNetCV_estimator.alphas_ = lasso_model.alphas_
 
         # this is the third part specifically checks an edge case in sequential modeling
         # where after the lasso model on all genes is run and the main effect isn't
@@ -682,7 +682,7 @@ def get_significant_predictors(
         bootstrap_lasso_output = bootstrap_stratified_cv_modeling(
             y=y,
             X=X,
-            estimator=lassoCV_estimator,
+            estimator=ElasticNetCV_estimator,
             ci_percentile=kwargs.get("ci_percentile", 95.0),
             n_bootstraps=kwargs.get("n_bootstraps", 1000),
             max_iter=10000,
@@ -707,7 +707,7 @@ def get_significant_predictors(
         "response": y,
         "classes": stratification_classes,
         "bootstrap_lasso_output": (
-            bootstrap_lasso_output if method == "bootstrap_lassocv" else None
+            bootstrap_lasso_output if method == "bootstrap_ElasticNetCV" else None
         ),
     }
 
@@ -769,9 +769,9 @@ def try_interactor_variants(
     stratified_cv_r2().
 
     :param intersect_coefficients: the set of coefficients that are determined to be
-        significant, expected to be from either a bootstrap procedure on a LassoCV
+        significant, expected to be from either a bootstrap procedure on a ElasticNetCV
         model on a full partition of the data and the top 10% by perturbed binding, or
-        LassoCV followed by backwards selection by adj-rsquared.
+        ElasticNetCV followed by backwards selection by adj-rsquared.
     :param interactor: the interactor term to be tested
     :param kwargs: additional arguments to be passed to the function. Expected
         arguments are 'y', 'X', and 'stratification_classes'. See stratified_cv_r2()
@@ -840,8 +840,8 @@ def get_interactor_importance(
     :param full_X: the full predictor matrix
     :param stratification_classes: the stratification classes for the data
     :param intersect_coefficients: the set of coefficients that are determined to be
-        significant, expected to be from either a bootstrap procedure on a LassoCV model
-        on a full partition of the data and the top 10% by perturbed binding, or LassoCV
+        significant, expected to be from either a bootstrap procedure on a ElasticNetCV model
+        on a full partition of the data and the top 10% by perturbed binding, or ElasticNetCV
         followed by backwards selection by p-value significance.
     :return: a tuple with the first element being the input_model_avg_rsquared and the
         second element being a list of dictionaries with keys 'interactor', 'variant',

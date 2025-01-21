@@ -11,7 +11,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from shiny import run_app
-from sklearn.linear_model import LassoCV
+from sklearn.linear_model import ElasticNetCV
 
 from yeastdnnexplorer.ml_models.lasso_modeling import (
     OLSFeatureSelector,
@@ -81,7 +81,7 @@ def run_shiny(args: argparse.Namespace) -> None:
 
 def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     """
-    Run LassoCV with bootstrap resampling on a specified transcription factor.
+    Run ElasticNetCV with bootstrap resampling on a specified transcription factor.
 
     :param args: The parsed command-line arguments.
 
@@ -115,8 +115,8 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
         formula=args.formula,
     )
 
-    # Configure and fit LassoCV estimator
-    lassoCV_estimator = LassoCV(
+    # Configure and fit ElasticNetCV estimator
+    ElasticNetCV_estimator = ElasticNetCV(
         fit_intercept=True,
         max_iter=10000,
         selection="random",
@@ -141,21 +141,21 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
 
     # Fit the model to extract alphas
     try:
-        lasso_model = stratified_cv_modeling(y, X, classes, lassoCV_estimator)
+        lasso_model = stratified_cv_modeling(y, X, classes, ElasticNetCV_estimator)
     except Exception as exc:
         raise RuntimeError(
-            f"Failed to fit the LassoCV model on {args.response_tf}."
+            f"Failed to fit the ElasticNetCV model on {args.response_tf}."
         ) from exc
 
     # Set the alphas of the main estimator for bootstrap consistency
-    lassoCV_estimator.alphas_ = lasso_model.alphas_
+    ElasticNetCV_estimator.alphas_ = lasso_model.alphas_
 
     # Run bootstrap modeling
     try:
         bootstrap_output = bootstrap_stratified_cv_modeling(
             y=y,
             X=X,
-            estimator=lassoCV_estimator,
+            estimator=ElasticNetCV_estimator,
             bootstrap_cv=True,
             n_bootstraps=args.n_bootstraps,
             ci_percentiles=[90.0, 95.0, 99.0, 100.0],
@@ -222,7 +222,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     response_df = pd.read_csv(args.response_file, index_col=0)
     predictors_df = pd.read_csv(args.predictors_file, index_col=0)
 
-    # Step 1: Run LassoCV, possibly with the bootstrap depending on args.method
+    # Step 1: Run ElasticNetCV, possibly with the bootstrap depending on args.method
     lasso_res = {
         "all": get_significant_predictors(
             args.method,
@@ -250,7 +250,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     # results from "all" and call get_significant_predictors
     # using only the TFs from these results on the top x% of data
     # Sequential analysis
-    if args.method == "bootstrap_lassocv":
+    if args.method == "bootstrap_ElasticNetCV":
         # Iterate through "all" and "top"
         for suffix, lasso_results in lasso_res.items():
             # Save ci_dict
@@ -350,7 +350,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
 
     # Step 2: find the intersect coefficients between the all and top models. This is
     # performed differently depending on args.method (see the tutorial)
-    if args.method == "lassocv_ols":
+    if args.method == "ElasticNetCV_ols":
 
         # Initialize the selector
         selector_all = OLSFeatureSelector(p_value_threshold=args.all_pval_threshold)
@@ -453,9 +453,9 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     with open(output_path, "w") as f:
         json.dump(output_dict, f, indent=4)
 
-    # If bootstrap_lassocv is the chosen method, need to repeat steps 3 and 4 for the
+    # If bootstrap_ElasticNetCV is the chosen method, need to repeat steps 3 and 4 for the
     # sequential results
-    if args.method == "bootstrap_lassocv":
+    if args.method == "bootstrap_ElasticNetCV":
         # Step 3 and 4 for the sequential method
 
         # Get the significant coefficients from the sequential results
@@ -617,8 +617,8 @@ def main() -> None:
     # Lasso Bootstrap command
     lasso_parser = subparsers.add_parser(
         "lasso_bootstrap",
-        help="Run LassoCV with bootstrap resampling",
-        description="Run LassoCV with bootstrap resampling",
+        help="Run ElasticNetCV with bootstrap resampling",
+        description="Run ElasticNetCV with bootstrap resampling",
         formatter_class=CustomHelpFormatter,
     )
 
@@ -729,7 +729,7 @@ def main() -> None:
         "--method",
         type=str,
         required=True,
-        choices=["bootstrap_lassocv", "lassocv_ols"],
+        choices=["bootstrap_ElasticNetCV", "ElasticNetCV_ols"],
         help="The method to use for modeling.",
     )
     input_group.add_argument(
@@ -737,28 +737,28 @@ def main() -> None:
         type=float,
         default=99.8,
         help="The percentile to use for the all model CI. This will only be used "
-        "if the method is `bootstrap_lassocv`.",
+        "if the method is `bootstrap_ElasticNetCV`.",
     )
     input_group.add_argument(
         "--top_ci_percentile",
         type=float,
         default=90.0,
         help="The percentile to use for the top model CI. This will only be used "
-        "if the method is `bootstrap_lassocv`.",
+        "if the method is `bootstrap_ElasticNetCV`.",
     )
     input_group.add_argument(
         "--all_pval_threshold",
         type=float,
         default=0.001,
         help="The p-value threshold to use for the all model. This will only be used "
-        "if the method is `lassocv_ols`.",
+        "if the method is `ElasticNetCV_ols`.",
     )
     input_group.add_argument(
         "--top_pval_threshold",
         type=float,
         default=0.01,
         help="The p-value threshold to use for the top model. This will only be used "
-        "if the method is `lassocv_ols`.",
+        "if the method is `ElasticNetCV_ols`.",
     )
     input_group.add_argument(
         "--data_quantile",
