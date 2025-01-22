@@ -521,7 +521,7 @@ def examine_bootstrap_coefficients(
     significant_coefs_dict = {
         coef: bounds
         for coef, bounds in ci_dict_local[ci_level].items()
-        if bounds[0] > threshold or bounds[1] < -threshold
+        if coef != "Intercept" and (bounds[0] > threshold or bounds[1] < -threshold)
     }
 
     # Display selected coefficients and their intervals

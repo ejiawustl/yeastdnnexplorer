@@ -6,31 +6,24 @@ import random
 import re
 import time
 from typing import Literal, Any
-from sklearn.utils import resample
-import matplotlib.pyplot as plt
-from sklearn.base import BaseEstimator, clone
 
 import joblib
 import numpy as np
-from sklearn.metrics import r2_score
 import pandas as pd
 from shiny import run_app
-from sklearn.model_selection import StratifiedKFold
-from statsmodels.api import add_constant
-
-
-# make proper file later and update the import
-from tmp.generalized_logistic_model_with_cv import GeneralizedLogisticModel
-
+from yeastdnnexplorer.ml_models.sigmoid_modeling import GeneralizedLogisticModel
+import matplotlib.pyplot as plt
 
 from yeastdnnexplorer.ml_models.lasso_modeling import (
     OLSFeatureSelector,
+    bootstrap_stratified_cv_modeling,
     generate_modeling_data,
     get_interactor_importance,
+    get_significant_predictors,
     stratification_classification,
     stratified_cv_modeling,
-    examine_bootstrap_coefficients,
     stratified_cv_r2,
+    examine_bootstrap_coefficients,
 )
 from yeastdnnexplorer.utils import LogLevel, configure_logger
 
@@ -39,186 +32,6 @@ logger = logging.getLogger("main")
 # set seeds for reproduciblity
 random.seed(42)
 np.random.seed(42)
-
-
-def stratified_cv_r2_sigmoid(
-    y: pd.DataFrame,
-    X: pd.DataFrame,
-    classes: np.ndarray,
-    estimator: BaseEstimator = GeneralizedLogisticModel(),
-    skf: StratifiedKFold = StratifiedKFold(n_splits=4, shuffle=True, random_state=42),
-) -> float:
-    """
-    Calculate the average stratified CV r-squared for a given estimator and data. By
-    default, this is a 4-fold stratified CV with a GLM() estimator. Note that
-    this method will add an intercept to X if it doesn't already exist. NOTE: this needs
-    to be updated to remove some redunant inputs like classes which isn't used at all.
-
-    :param y: The response variable. See generate_modeling_data()
-    :param X: The predictor variables. See generate_modeling_data()
-    :param classes: the stratification classes for the data
-    :param estimator: the estimator to be used in the modeling. By default, this is a
-        LinearRegression() model.
-    :param skf: the StratifiedKFold object to be used in the modeling. By default, this
-        is a 4-fold stratified CV with shuffle=True and random_state=42.
-    :return: the average r-squared value for the stratified CV
-
-    """
-    # If there is no constant term, add one
-    X_with_intercept = add_constant(X, has_constant="skip")
-
-    estimator_local = clone(estimator)
-    r2_scores = []
-
-    for train_idx, test_idx in skf.split(X_with_intercept, classes):
-        # Use train and test indices to split X and y
-        X_train, X_test = (
-            X_with_intercept.iloc[train_idx],
-            X_with_intercept.iloc[test_idx],
-        )
-        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-        # fit a sigmoid model
-        sigmoid_model = stratified_cv_modeling(
-            y_train, X_train, classes[train_idx], estimator_local
-        )
-        # Calculate R-squared and append to r2_scores
-        r2_scores.append(r2_score(y_test, sigmoid_model.predict(X_test)))
-
-    return np.mean(r2_scores)
-
-
-def bootstrap_stratified_cv_modeling(
-    n_bootstraps: int = 1000,
-    ci_percentiles: list[float] = [95.0, 99.0],
-    use_sample_weight_in_cv: bool = False,
-    **kwargs,
-) -> tuple[dict[str, dict[str, tuple[float, float]]], pd.DataFrame, list[float]]:
-    r"""
-    Perform bootstrap resampling to generate confidence intervals for
-    Lasso coefficients. See 6.2 in https://hastie.su.domains/StatLearnSparsity/ -- this
-    is an implementation of the algorithm described in that section.
-
-    :param n_bootstraps: The number of bootstrap samples to generate.
-    :param ci_percentiles: A list of CI percentiles to calculate. Default to [95, 99]
-    :param use_sample_weight_in_cv: Whether to use sample weights, calculated as the
-        proportion of times a given record appears, in boostrap iterations. Default is
-        False.
-    :param kwargs: The required arguments to `stratified_cv_modeling` must be
-        passed as keyword arguments to this function. Any additional keyword arguments
-        will be passed to the Lasso estimator.
-
-    :return: A tuple where:
-        - The first element is a dictionary of confidence intervals,
-          where keys are CI levels (e.g., "95.0") and values are dictionaries
-          mapping each coefficient to its lower and upper bounds, with columns named
-          according to the predictors in `X`.
-        - The second element is a DataFrame where each row represents a
-        bootstrap sample,
-          and columns correspond to the predictor variables from `X`.
-        - The third element is a list of alpha values from each bootstrap iteration.
-
-
-    :raises ValueError: If any of the required keyword arguments for
-        `stratified_cv_modeling()` are not passed.
-    :raises ValueError: If `n_bootstraps` is not an integer greater than 0.
-    :raises ValueError: If `ci_percentiles` is not a list of integers or floats.
-    :raises ValueError: If `use_sample_weight_in_cv` is not a boolean.
-    :raises ValueError: If the response variable is not in the predictors DataFrame.
-        If there are replicates, they are expected to have the suffix _rep\d+. This
-        is attempted to be removed from the response variable name to match the
-        predictors DataFrame.
-    """
-    # Validate input parameters
-    if not isinstance(n_bootstraps, int) or n_bootstraps < 1:
-        raise ValueError("The number of bootstraps must be an integer greater than 0.")
-    if not isinstance(ci_percentiles, list) or not all(
-        isinstance(x, (int, float)) for x in ci_percentiles
-    ):
-        raise ValueError(
-            "The confidence interval percentiles must be a list of integers or floats."
-        )
-    if not isinstance(use_sample_weight_in_cv, bool):
-        raise ValueError("The use_sample_weight_in_cv parameter must be a boolean.")
-
-    # Extract and validate required arguments for modeling
-    y = kwargs.pop("y")
-    X = kwargs.pop("X")
-    estimator = kwargs.pop("estimator")
-    if any(x is None for x in [y, X, estimator]):
-        raise ValueError(
-            "Arguments 'y', 'X', and 'estimator' must be "
-            "passed to bootstrap_cv_modeling()."
-        )
-
-    method = kwargs.get("method")
-
-    response_tf = re.sub(r"_rep\d+", "", y.columns[0])
-
-    if response_tf not in X.columns:
-        raise ValueError(
-            f"The response variable {response_tf} is not in the predictors DataFrame."
-        )
-
-    bootstrap_coefs = []
-    alpha_list = []
-
-    # Bootstrap iterations
-    for _ in range(n_bootstraps):
-        Y_resampled = resample(y, replace=True)
-        X_resampled = X.loc[Y_resampled.index]
-
-        weights = None
-        if use_sample_weight_in_cv:
-            index_mapping = {label: idx for idx, label in enumerate(y.index)}
-            integer_indices = [index_mapping[label] for label in Y_resampled.index]
-            sample_counts = np.bincount(integer_indices, minlength=len(y))
-            weights = sample_counts / len(y)
-
-        classes = stratification_classification(
-            X_resampled.loc[:, response_tf].squeeze(), Y_resampled.squeeze()
-        )
-
-        # this is the second part of the code for the edge case in which during
-        # sequential modeling we do not find the main effect to be significant
-        # in the first place, therefore we must ignore it for modeling purposes
-        ignore_main_effects = kwargs.get("ignore_main_effect", False)
-        if ignore_main_effects:
-            X_resampled = X_resampled.drop([response_tf], axis=1)
-
-        model_i = stratified_cv_modeling(
-            Y_resampled,
-            X_resampled,
-            classes=classes,
-            estimator=estimator,
-            sample_weight=weights,
-        )
-        if method != "sigmoid":
-            alpha_list.append(model_i.alpha_)
-        bootstrap_coefs.append(model_i.coef_)
-
-    # Convert coefficients list to a DataFrame with column names from X
-    bootstrap_coefs_df = pd.DataFrame(
-        bootstrap_coefs,
-        # this is the fourth part of the code that handles the edge case where you drop
-        # the main effect if needed
-        columns=(
-            X.drop(columns=[response_tf]).columns if ignore_main_effects else X.columns
-        ),
-    )
-
-    # Compute confidence intervals
-    ci_dict = {
-        f"{str(ci)}": {
-            colname: (
-                np.percentile(bootstrap_coefs_df[colname], (100 - ci) / 2),
-                np.percentile(bootstrap_coefs_df[colname], 100 - (100 - ci) / 2),
-            )
-            for colname in bootstrap_coefs_df.columns
-        }
-        for ci in ci_percentiles
-    }
-
-    return ci_dict, bootstrap_coefs_df, alpha_list
 
 
 def get_significant_predictors(
@@ -282,7 +95,7 @@ def get_significant_predictors(
         response_df,
         predictors_df,
         quantile_threshold=kwargs.get("quantile_threshold", None),
-        drop_intercept=True,
+        drop_intercept=False,
         formula=formula,  # Pass formula from kwargs
     )
 
@@ -303,19 +116,25 @@ def get_significant_predictors(
 
     # Fit the model to the data in order to extract the alphas_ which are generated
     # during the fitting process
-    lasso_model = stratified_cv_modeling(
+    sigmoid_model = stratified_cv_modeling(
         y, X, stratification_classes, sigmoid_estimator
     )
 
     if method == "lassocv_ols":
         # return a list of the non-zero features that survived the fitting
-        non_zero_indices = lasso_model.coef_ != 0
+        non_zero_indices = sigmoid_model.coef_ != 0
         non_zero_features = X.columns[non_zero_indices]
         sig_coef_dict = {
-            k: v for k, v in zip(non_zero_features, lasso_model.coef_[non_zero_indices])
+            k: v
+            for k, v in zip(non_zero_features, sigmoid_model.coef_[non_zero_indices])
         }
 
     elif method == "bootstrap_lassocv":
+
+        # set the alphas_ attribute of the sigmoid_estimator to the alphas_
+        # attribute of the sigmoid_model fit on the whole data. This will allow the
+        # bootstrap_stratified_cv_modeling function to use the same set of lambdas
+        sigmoid_estimator.alphas_ = sigmoid_model.alphas_
 
         # this is the third part specifically checks an edge case in sequential modeling
         # where after the lasso model on all genes is run and the main effect isn't
@@ -337,6 +156,7 @@ def get_significant_predictors(
             if perturbed_tf not in rhs_terms:
                 ignore_main_effect = True
 
+        logging.info("running bootstraps")
         bootstrap_lasso_output = bootstrap_stratified_cv_modeling(
             y=y,
             X=X,
@@ -348,7 +168,6 @@ def get_significant_predictors(
             selection="random",
             random_state=42,
             ignore_main_effect=ignore_main_effect,
-            method="sigmoid",
         )
 
         sig_coef_plt, sig_coef_dict = examine_bootstrap_coefficients(
@@ -422,7 +241,7 @@ def run_shiny(args: argparse.Namespace) -> None:
 
 def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     """
-    Run LassoCV with bootstrap resampling on a specified transcription factor.
+    Run GeneralizedLogisticModel() with bootstrap resampling on a specified transcription factor.
 
     :param args: The parsed command-line arguments.
 
@@ -457,7 +276,7 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     )
 
     # Configure and fit LassoCV estimator
-    lassoCV_estimator = GeneralizedLogisticModel()
+    sigmoid_estimator = GeneralizedLogisticModel()
 
     if re.match("_rep\\d+", y.columns[0]):
         logger.debug(
@@ -476,21 +295,21 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
 
     # Fit the model to extract alphas
     try:
-        lasso_model = stratified_cv_modeling(y, X, classes, lassoCV_estimator)
+        sigmoid_model = stratified_cv_modeling(y, X, classes, sigmoid_estimator)
     except Exception as exc:
         raise RuntimeError(
             f"Failed to fit the LassoCV model on {args.response_tf}."
         ) from exc
 
     # Set the alphas of the main estimator for bootstrap consistency
-    lassoCV_estimator.alphas_ = lasso_model.alphas_
+    sigmoid_estimator.alphas_ = sigmoid_model.alphas_
 
     # Run bootstrap modeling
     try:
         bootstrap_output = bootstrap_stratified_cv_modeling(
             y=y,
             X=X,
-            estimator=lassoCV_estimator,
+            estimator=sigmoid_estimator,
             bootstrap_cv=True,
             n_bootstraps=args.n_bootstraps,
             ci_percentiles=[90.0, 95.0, 99.0, 100.0],
@@ -504,14 +323,14 @@ def run_lasso_bootstrap(args: argparse.Namespace) -> None:
             f"Failed to run bootstrap modeling on {args.response_tf}."
         ) from exc
 
-    # the lasso_model and bootstrap_output in output_dirpath. boostrap_output is a
+    # the sigmoid_model and bootstrap_output in output_dirpath. boostrap_output is a
     # is a tuple where the first value is a dictionary called "ci_dict",
     # the second is a data frame called "bootstrap_coef_df",
     # and the third is a list called "bootstrap_alphas".
 
     # Save the fitted Lasso model
-    lasso_model_path = os.path.join(output_dirpath, "lasso_model.joblib")
-    joblib.dump(lasso_model, lasso_model_path)
+    sigmoid_model_path = os.path.join(output_dirpath, "sigmoid_model.joblib")
+    joblib.dump(sigmoid_model, sigmoid_model_path)
 
     # Save ci_dict as JSON
     ci_dict = bootstrap_output[0]
@@ -603,6 +422,10 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         # Get significant predictors from "all" results
         assert isinstance(lasso_res["all"]["sig_coefs"], dict)
         significant_predictors_all = list(lasso_res["all"]["sig_coefs"].keys())
+
+        # remove the intercept prior to sequential modeling
+        if "Intercept" in significant_predictors_all:
+            significant_predictors_all.remove("Intercept")
 
         # Build the formula using these predictors
         response_variable = f"{args.response_tf}_LRR"
@@ -771,11 +594,10 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         lasso_res["all"]["classes"],
     )
 
-    final_model_avg_r_squared = stratified_cv_r2_sigmoid(
+    final_model_avg_r_squared = stratified_cv_r2(
         lasso_res["all"]["response"],
         full_X[list(final_features)],
         lasso_res["all"]["classes"],
-        estimator=GeneralizedLogisticModel(),
     )
 
     output_dict = {
@@ -861,11 +683,10 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             classes_seq,
         )
 
-        final_model_avg_r_squared_seq = stratified_cv_r2_sigmoid(
+        final_model_avg_r_squared_seq = stratified_cv_r2(
             response_seq,
             full_X_seq[list(sequential_final_features)],
             classes_seq,
-            estimator=GeneralizedLogisticModel(),
         )
 
         # Prepare output dictionary
