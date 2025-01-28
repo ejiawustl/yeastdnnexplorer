@@ -23,7 +23,7 @@ class GeneralizedLogisticModel:
     # toying with value of epsilon: at 1e-3 there are 1-2.5k iterations to converge, 7m to train the model
     # at 1e-4 it takes there are 3-5k iterations to converge, ~14m to train, 0.07935907163881795
     # at 1e-5 it reaches max iterations to converge, ~20m to train, 0.08054242919130805
-    def __init__(self, cv=4, alphas=None, n_alphas=100, eps=1e-5, max_iter=10000):
+    def __init__(self, cv=4, alphas=None, n_alphas=100, eps=1e-4, max_iter=10000):
         """Initialize the generalized logistic model."""
         self._X: np.ndarray | None = None
         self._y: np.ndarray | None = None
