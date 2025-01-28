@@ -55,7 +55,13 @@ class GeneralizedLogisticModel:
 
         :return: A shallow copy of the model
         """
-        clone = type(self)(**self._init_params)
+        # Create a new instance with the same initialization parameters
+        clone = type(self)()
+
+        # Update initialization parameters
+        clone._init_params = self._init_params.copy()
+
+        # Update all attributes
         clone.__dict__.update(self.__dict__)
         return clone
 
@@ -68,15 +74,19 @@ class GeneralizedLogisticModel:
         """
         import copy
 
-        # Create a new instance with the same initialization parameters
-        clone = type(self)(**self._init_params)
+        # Create a new instance with default parameters first
+        clone = type(self)()
 
         # Add the new object to the memo dictionary
         memo[id(self)] = clone
 
-        # Deep copy all attributes
+        # Deep copy initialization parameters
+        clone._init_params = copy.deepcopy(self._init_params, memo)
+
+        # Deep copy all other attributes
         for k, v in self.__dict__.items():
-            setattr(clone, k, copy.deepcopy(v, memo))
+            if k != "_init_params":
+                setattr(clone, k, copy.deepcopy(v, memo))
 
         return clone
 
@@ -959,7 +969,13 @@ class GeneralizedLogisticModel:
         :param deep: Whether to return deep parameters (ignored for simplicity).
         :return: A dictionary of parameters.
         """
-        return {"cv": self.cv}
+        return {
+            "cv": self.cv,
+            "alphas": self.alphas,
+            "n_alphas": self.n_alphas,
+            "eps": self.eps,
+            "max_iter": self.max_iter,
+        }
 
     def set_params(self, **params):
         """
