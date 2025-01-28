@@ -231,7 +231,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             predictors_df,
             ci_percentile=args.all_ci_percentile,
             n_bootstraps=args.n_bootstraps,
-            add_max_lrb=True,
+            add_max_lrb=False,
         ),
         "top": get_significant_predictors(
             args.method,
@@ -240,7 +240,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             predictors_df,
             ci_percentile=args.top_ci_percentile,
             n_bootstraps=args.n_bootstraps,
-            add_max_lrb=True,
+            add_max_lrb=False,
             quantile_threshold=args.data_quantile,
         ),
     }
