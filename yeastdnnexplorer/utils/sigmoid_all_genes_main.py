@@ -5,26 +5,22 @@ import os
 import random
 import re
 import time
-from typing import Literal, Any
+from typing import Any, Literal
 
 import joblib
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from shiny import run_app
-from yeastdnnexplorer.ml_models.sigmoid_modeling import GeneralizedLogisticModel
-import matplotlib.pyplot as plt
 
 from yeastdnnexplorer.ml_models.lasso_modeling import (
-    OLSFeatureSelector,
     bootstrap_stratified_cv_modeling,
+    examine_bootstrap_coefficients,
     generate_modeling_data,
-    get_interactor_importance,
-    get_significant_predictors,
     stratification_classification,
     stratified_cv_modeling,
-    stratified_cv_r2,
-    examine_bootstrap_coefficients,
 )
+from yeastdnnexplorer.ml_models.sigmoid_modeling import GeneralizedLogisticModel
 from yeastdnnexplorer.utils import LogLevel, configure_logger
 
 logger = logging.getLogger("main")
@@ -241,7 +237,8 @@ def run_shiny(args: argparse.Namespace) -> None:
 
 def run_lasso_bootstrap(args: argparse.Namespace) -> None:
     """
-    Run GeneralizedLogisticModel() with bootstrap resampling on a specified transcription factor.
+    Run GeneralizedLogisticModel() with bootstrap resampling on a specified
+    transcription factor.
 
     :param args: The parsed command-line arguments.
 
@@ -357,6 +354,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     Run the find_interactors_workflow with the specified arguments.
 
     :param args: The parsed command-line arguments.
+
     """
     output_dirpath = os.path.join(args.output_dir, args.response_tf)
     if os.path.exists(output_dirpath):

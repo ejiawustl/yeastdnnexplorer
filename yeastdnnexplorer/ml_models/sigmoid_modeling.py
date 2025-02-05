@@ -2,13 +2,12 @@ import logging
 import numbers
 from collections.abc import Sequence
 
-import numdifftools as nd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from lmfit import Minimizer, Parameters
 from scipy import stats
-from lmfit import Parameters, Minimizer, minimize
 from tabulate import tabulate  # type: ignore
 
 from yeastdnnexplorer.utils.InteractorDiagnosticPlot import InteractorDiagnosticPlot
@@ -20,9 +19,6 @@ logger = logging.getLogger("main")
 class GeneralizedLogisticModel:
     """Generalized logistic model for fitting sigmoidal curves to data."""
 
-    # toying with value of epsilon: at 1e-3 there are 1-2.5k iterations to converge, 7m to train the model
-    # at 1e-4 it takes there are 3-5k iterations to converge, ~14m to train, 0.07935907163881795
-    # at 1e-5 it reaches max iterations to converge, ~20m to train, 0.08054242919130805
     def __init__(self, cv=4, alphas=None, n_alphas=100, eps=1e-4, max_iter=10000):
         """Initialize the generalized logistic model."""
         self._X: np.ndarray | None = None
@@ -54,6 +50,7 @@ class GeneralizedLogisticModel:
         Create a shallow copy of the model.
 
         :return: A shallow copy of the model
+
         """
         # Create a new instance with the same initialization parameters
         clone = type(self)()
@@ -71,6 +68,7 @@ class GeneralizedLogisticModel:
 
         :param memo: Memo dictionary used by the deepcopy process
         :return: A deep copy of the model
+
         """
         import copy
 
@@ -446,178 +444,20 @@ class GeneralizedLogisticModel:
             self.coef_,
         )
 
-    # def fit(self, X, y, sample_weight=None, **kwargs):
-    #     """
-    #     Fit Generalized Logistic Model with Lasso regularization using cross-validation.
-
-    #     :param X: Input data matrix
-    #     :param y: Target values
-    #     :param sample_weight: Optional sample weights
-    #     :param kwargs: Additional arguments passed to minimize
-    #     :return: self
-    #     """
-    #     self._X = np.asarray(X)
-    #     self._y = np.asarray(y)
-
-    #     # Generate alphas if not provided
-    #     if self.alphas is None:
-    #         y_scale = np.std(self._y)
-    #         alpha_max = np.abs(self._X.T @ self._y).max() / (len(self._y) * y_scale)
-    #         self.alphas_ = np.logspace(
-    #             np.log10(alpha_max * self.eps), np.log10(alpha_max), num=self.n_alphas
-    #         )
-    #     else:
-    #         # Convert alphas to numpy array if it's a list
-    #         self.alphas_ = np.asarray(self.alphas)
-
-    #     # Initialize arrays to store CV scores
-    #     n_alphas = len(self.alphas_)
-    #     n_folds = self.cv if isinstance(self.cv, int) else len(self.cv)
-    #     cv_scores = np.zeros((n_alphas, n_folds))
-
-    #     # Split data into CV folds
-    #     if isinstance(self.cv, int):
-    #         n_samples = len(self._y)
-    #         fold_size = n_samples // n_folds
-    #         indices = np.arange(n_samples)
-    #         np.random.shuffle(indices)
-    #         folds = [
-    #             (
-    #                 indices[fold * fold_size : (fold + 1) * fold_size],
-    #                 np.concatenate(
-    #                     [indices[: fold * fold_size], indices[(fold + 1) * fold_size :]]
-    #                 ),
-    #             )
-    #             for fold in range(n_folds)
-    #         ]
-    #     else:
-    #         folds = self.cv
-
-    #     # delete later:
-    #     print(self.alphas_)
-    #     print(self.cv)
-
-    #     # Cross validation loop for each alpha
-    #     for alpha_idx, alpha in enumerate(self.alphas_):
-    #         for fold_idx, (test_idx, train_idx) in enumerate(folds):
-    #             X_train, X_test = self._X[train_idx], self._X[test_idx]
-    #             y_train, y_test = self._y[train_idx], self._y[test_idx]
-
-    #             # Initialize parameters
-    #             params = Parameters()
-    #             params.add("left_asymptote", value=0.0)
-    #             params.add("right_asymptote", value=1.0)
-    #             for i in range(X_train.shape[1]):
-    #                 params.add(f"coef_{i}", value=0.0)
-
-    #             def residual(params, X=X_train, y=y_train):
-    #                 left_asymptote = params["left_asymptote"].value
-    #                 right_asymptote = params["right_asymptote"].value
-    #                 coef_ = np.array(
-    #                     [params[f"coef_{i}"].value for i in range(X.shape[1])]
-    #                 )
-
-    #                 linear_combination = np.dot(X, coef_)
-    #                 predicted = left_asymptote + (right_asymptote - left_asymptote) / (
-    #                     1 + np.exp(-linear_combination)
-    #                 )
-
-    #                 # Add L1 penalty
-    #                 l1_penalty = alpha * np.sum(np.abs(coef_))
-    #                 residuals = y - predicted
-
-    #                 if sample_weight is not None:
-    #                     residuals = residuals * sample_weight[train_idx]
-
-    #                 return np.concatenate([residuals, [l1_penalty]])
-
-    #             # Fit on training data
-    #             result = minimize(
-    #                 residual, params, method="leastsq", max_nfev=self.max_iter, **kwargs
-    #             )
-
-    #             # remove later: getting a sense of how many models converge
-    #             print(f"Iterations: {result.nfev}")
-    #             print(f"Success: {result.success}")
-
-    #             # Predict on test data and compute MSE
-    #             left_asymptote = result.params["left_asymptote"].value
-    #             right_asymptote = result.params["right_asymptote"].value
-    #             coef_ = np.array(
-    #                 [result.params[f"coef_{i}"].value for i in range(X_test.shape[1])]
-    #             )
-
-    #             linear_combination = np.dot(X_test, coef_)
-    #             y_pred = left_asymptote + (right_asymptote - left_asymptote) / (
-    #                 1 + np.exp(-linear_combination)
-    #             )
-
-    #             mse = np.mean((y_test - y_pred) ** 2)
-    #             cv_scores[alpha_idx, fold_idx] = mse
-
-    #     # Find best alpha
-    #     mean_cv_scores = np.mean(cv_scores, axis=1)
-    #     best_alpha_idx = np.argmin(mean_cv_scores)
-    #     self.alpha_ = self.alphas_[best_alpha_idx]
-
-    #     # Refit model with best alpha on full dataset
-    #     params = Parameters()
-    #     params.add("left_asymptote", value=0.0)
-    #     params.add("right_asymptote", value=1.0)
-    #     for i in range(self._X.shape[1]):
-    #         params.add(f"coef_{i}", value=0.0)
-
-    #     def final_residual(params):
-    #         left_asymptote = params["left_asymptote"].value
-    #         right_asymptote = params["right_asymptote"].value
-    #         coef_ = np.array(
-    #             [params[f"coef_{i}"].value for i in range(self._X.shape[1])]
-    #         )
-
-    #         linear_combination = np.dot(self._X, coef_)
-    #         predicted = left_asymptote + (right_asymptote - left_asymptote) / (
-    #             1 + np.exp(-linear_combination)
-    #         )
-
-    #         # Add L1 penalty with best alpha
-    #         l1_penalty = self.alpha_ * np.sum(np.abs(coef_))
-    #         residuals = self._y - predicted
-
-    #         if sample_weight is not None:
-    #             residuals = residuals * sample_weight
-
-    #         return np.concatenate([residuals, [l1_penalty]])
-
-    #     result = minimize(
-    #         final_residual, params, method="leastsq", max_nfev=self.max_iter, **kwargs
-    #     )
-
-    #     # Store final parameters
-    #     self._left_asymptote = result.params["left_asymptote"].value
-    #     self._right_asymptote = result.params["right_asymptote"].value
-    #     self.coef_ = np.array(
-    #         [result.params[f"coef_{i}"].value for i in range(self._X.shape[1])]
-    #     )
-    #     self._residuals = self._y - self.predict(self._X)
-    #     self._cov = (
-    #         result.covar
-    #         if result.covar is not None
-    #         else np.full((len(result.params), len(result.params)), np.nan)
-    #     )
-
-    #     # Store optimization result and best alpha
-    #     self.optimization_result_ = result
-
-    #     return self
-
     def fit(self, X, y, sample_weight=None, **kwargs):
         """
-        Fit Generalized Logistic Model using cross-validation with soft L1 loss.
+        Fit the model to the data. This uses 'lmfit's Minimizer()' which  is itself a
+        wrapper function of `scipy.optimize.curve_fit` to optimize the model parameters.
+        See https://lmfit.github.io/lmfit-py/fitting.html. This performs cross
+        validation over a grid of alphas akin to the LassoCV() object from scipy but
+        using the sigmoid models. This ultimately finds the model with the best alpha
+        and re-fits the model to the full dataset. This performs least squares
+        minimization with soft l1 loss approximation to regularize the model.
 
         :param X: Input data matrix
         :param y: Target values
         :param sample_weight: Optional sample weights
-        :param kwargs: Additional arguments passed to minimize
+        :param kwargs: Additional keyword arguments to pass to `Minimizer()`.
         :return: self
         """
         self._X = np.asarray(X)
@@ -655,10 +495,6 @@ class GeneralizedLogisticModel:
             ]
         else:
             folds = self.cv
-
-        # delete later:
-        print(self.alphas_)
-        print(self.cv)
 
         # Cross validation loop for each alpha
         for alpha_idx, alpha in enumerate(self.alphas_):
@@ -710,10 +546,6 @@ class GeneralizedLogisticModel:
                     **kwargs,
                 )
 
-                # remove later: getting a sense of how many models converge
-                print(f"Iterations: {result.nfev}")
-                print(f"Success: {result.success}")
-
                 # Predict on test data and compute MSE
                 left_asymptote = result.params["left_asymptote"].value
                 right_asymptote = result.params["right_asymptote"].value
@@ -744,9 +576,10 @@ class GeneralizedLogisticModel:
         def final_residual(params):
             left_asymptote = params["left_asymptote"].value
             right_asymptote = params["right_asymptote"].value
-            coef_ = np.array(
-                [params[f"coef_{i}"].value for i in range(self._X.shape[1])]
-            )
+            if self._X is not None:
+                coef_ = [params[f"coef_{i}"].value for i in range(self._X.shape[1])]
+            else:
+                raise ValueError("self._X is None, cannot determine shape")
 
             linear_combination = np.dot(self._X, coef_)
             predicted = left_asymptote + (right_asymptote - left_asymptote) / (
@@ -968,6 +801,7 @@ class GeneralizedLogisticModel:
 
         :param deep: Whether to return deep parameters (ignored for simplicity).
         :return: A dictionary of parameters.
+
         """
         return {
             "cv": self.cv,
@@ -983,6 +817,7 @@ class GeneralizedLogisticModel:
 
         :param params: A dictionary of parameters to set.
         :return: self
+
         """
         for key, value in params.items():
             setattr(self, key, value)
