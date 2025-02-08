@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
-from lmfit import Minimizer, Parameters
 from scipy import stats
+from scipy.optimize import minimize
 from tabulate import tabulate  # type: ignore
 
 from yeastdnnexplorer.utils.InteractorDiagnosticPlot import InteractorDiagnosticPlot
@@ -361,6 +361,37 @@ class GeneralizedLogisticModel:
         return 1 - (self.rss / self.tss)
 
     @property
+    def adj_r_squared(self) -> float | None:
+        """
+        The adjusted variance explained by the model.
+
+        :return: The adjusted variance explained by the model.
+
+        :raises AttributeError: `rss` or `tss` is not available
+
+        """
+        if self.rss is None:
+            raise AttributeError(
+                "`rss` is not available. Check that `fit()` has been run."
+            )
+        if self.tss is None:
+            raise AttributeError(
+                "`tss` is not available. Check that `model()` has been run."
+            )
+        if self.df is None:
+            raise AttributeError(
+                "`df` is not available. Check that `fit()` has been run."
+            )
+        if self.X.shape[0] is None:
+            raise AttributeError(
+                "`X.shape[0]` is not available. Check that `fit()` has been run."
+            )
+
+        r2 = 1 - (self.rss / self.tss)
+
+        return 1 - (1 - r2) * (self.X.shape[0] - 1) / self.df
+
+    @property
     def llf(self) -> float | None:
         """
         The log-likelihood of the model. Note that this assumes Gaussian residuals.
@@ -446,24 +477,19 @@ class GeneralizedLogisticModel:
 
     def fit(self, X, y, sample_weight=None, **kwargs):
         """
-        Fit the model to the data. This uses 'lmfit's Minimizer()' which  is itself a
-        wrapper function of `scipy.optimize.curve_fit` to optimize the model parameters.
-        See https://lmfit.github.io/lmfit-py/fitting.html. This performs cross
-        validation over a grid of alphas akin to the LassoCV() object from scipy but
-        using the sigmoid models. This ultimately finds the model with the best alpha
-        and re-fits the model to the full dataset. This performs least squares
-        minimization with soft l1 loss approximation to regularize the model.
+        Fit Generalized Logistic Model with Lasso regularization using cross-validation.
 
         :param X: Input data matrix
         :param y: Target values
         :param sample_weight: Optional sample weights
-        :param kwargs: Additional keyword arguments to pass to `Minimizer()`.
+        :param kwargs: Additional arguments passed to minimize
         :return: self
+
         """
         self._X = np.asarray(X)
         self._y = np.asarray(y)
 
-        # Generate alphas if not provided (these will be used as f_scale parameters)
+        # Generate alphas if not provided
         if self.alphas is None:
             y_scale = np.std(self._y)
             alpha_max = np.abs(self._X.T @ self._y).max() / (len(self._y) * y_scale)
@@ -471,6 +497,7 @@ class GeneralizedLogisticModel:
                 np.log10(alpha_max * self.eps), np.log10(alpha_max), num=self.n_alphas
             )
         else:
+            # Convert alphas to numpy array if it's a list
             self.alphas_ = np.asarray(self.alphas)
 
         # Initialize arrays to store CV scores
@@ -478,6 +505,7 @@ class GeneralizedLogisticModel:
         n_folds = self.cv if isinstance(self.cv, int) else len(self.cv)
         cv_scores = np.zeros((n_alphas, n_folds))
 
+        # starting here: make it integrate stratified folds
         # Split data into CV folds
         if isinstance(self.cv, int):
             n_samples = len(self._y)
@@ -496,69 +524,56 @@ class GeneralizedLogisticModel:
         else:
             folds = self.cv
 
+        def objective(w, X_local, y_local, alpha_local):
+            """
+            Single scalar objective:
+            SSE (or weighted SSE) + alpha * L1(coefs).
+            w[0] = left_asymptote
+            w[1] = right_asymptote
+            w[2:] = coefficients
+            """
+            linear_combination = np.dot(X_local, w[2:])
+            left_asymptote = w[0]
+            right_asymptote = w[1]
+            pred = left_asymptote + (right_asymptote - left_asymptote) / (
+                1 + np.exp(-linear_combination)
+            )
+            residual = y_local - pred
+            sse = np.sum(residual**2)
+            # L1 penalty on the *coef* part only (NOT the asymptotes).
+            # If you do want to penalize the asymptotes, you could change to w[:]
+            penalty = alpha_local * np.sum(np.abs(w[2:]))
+            return sse + penalty
+
         # Cross validation loop for each alpha
         for alpha_idx, alpha in enumerate(self.alphas_):
-            for fold_idx, (test_idx, train_idx) in enumerate(folds):
+            for fold_idx, (train_idx, test_idx) in enumerate(folds):
                 X_train, X_test = self._X[train_idx], self._X[test_idx]
                 y_train, y_test = self._y[train_idx], self._y[test_idx]
 
                 # Initialize parameters
-                params = Parameters()
-                params.add("left_asymptote", value=0.0)
-                params.add("right_asymptote", value=1.0)
-                for i in range(X_train.shape[1]):
-                    params.add(f"coef_{i}", value=0.0)
+                w0 = np.zeros(X_train.shape[1] + 2)
+                w0[1] = 1.0  # e.g. start right_asymptote at 1.0
 
-                def residual(params, X=X_train, y=y_train):
-                    left_asymptote = params["left_asymptote"].value
-                    right_asymptote = params["right_asymptote"].value
-                    coef_ = np.array(
-                        [params[f"coef_{i}"].value for i in range(X.shape[1])]
-                    )
-
-                    linear_combination = np.dot(X, coef_)
-                    predicted = left_asymptote + (right_asymptote - left_asymptote) / (
-                        1 + np.exp(-linear_combination)
-                    )
-
-                    residuals = y - predicted
-                    if sample_weight is not None:
-                        residuals = residuals * sample_weight[train_idx]
-
-                    return residuals
-
-                # Fit on training data using least_squares method
-                minimizer = Minimizer(
-                    residual,
-                    params,
-                    fcn_args=(),
-                    fcn_kws={},
-                    nan_policy="omit",
-                    calc_covar=True,
-                )
-
-                result = minimizer.least_squares(
-                    ftol=self.eps,
-                    xtol=self.eps,
-                    max_nfev=self.max_iter,
-                    loss="soft_l1",
-                    f_scale=alpha,
+                # Run optimization
+                res = minimize(
+                    fun=objective,
+                    x0=w0,
+                    args=(X_train, y_train, alpha),
+                    method="L-BFGS-B",  # or "BFGS", etc.
+                    options={"maxiter": self.max_iter},
                     **kwargs,
                 )
 
-                # Predict on test data and compute MSE
-                left_asymptote = result.params["left_asymptote"].value
-                right_asymptote = result.params["right_asymptote"].value
-                coef_ = np.array(
-                    [result.params[f"coef_{i}"].value for i in range(X_test.shape[1])]
-                )
-
-                linear_combination = np.dot(X_test, coef_)
-                y_pred = left_asymptote + (right_asymptote - left_asymptote) / (
+                # Evaluate on test data
+                w_opt = res.x
+                linear_combination = np.dot(X_test, w_opt[2:])
+                left_asymptote = w_opt[0]
+                right_asymptote = w_opt[1]
+                pred_test = left_asymptote + (right_asymptote - left_asymptote) / (
                     1 + np.exp(-linear_combination)
                 )
-
-                mse = np.mean((y_test - y_pred) ** 2)
+                mse = np.mean((y_test - pred_test) ** 2)
                 cv_scores[alpha_idx, fold_idx] = mse
 
         # Find best alpha
@@ -566,64 +581,35 @@ class GeneralizedLogisticModel:
         best_alpha_idx = np.argmin(mean_cv_scores)
         self.alpha_ = self.alphas_[best_alpha_idx]
 
-        # Fit final model with best alpha on full dataset
-        params = Parameters()
-        params.add("left_asymptote", value=0.0)
-        params.add("right_asymptote", value=1.0)
-        for i in range(self._X.shape[1]):
-            params.add(f"coef_{i}", value=0.0)
-
-        def final_residual(params):
-            left_asymptote = params["left_asymptote"].value
-            right_asymptote = params["right_asymptote"].value
-            if self._X is not None:
-                coef_ = [params[f"coef_{i}"].value for i in range(self._X.shape[1])]
-            else:
-                raise ValueError("self._X is None, cannot determine shape")
-
-            linear_combination = np.dot(self._X, coef_)
-            predicted = left_asymptote + (right_asymptote - left_asymptote) / (
-                1 + np.exp(-linear_combination)
-            )
-
-            residuals = self._y - predicted
-            if sample_weight is not None:
-                residuals = residuals * sample_weight
-
-            return residuals
-
-        # Final fit using least_squares
-        minimizer = Minimizer(
-            final_residual,
-            params,
-            fcn_args=(),
-            fcn_kws={},
-            nan_policy="omit",
-            calc_covar=True,
-        )
-
-        result = minimizer.least_squares(
-            ftol=self.eps,
-            xtol=self.eps,
-            max_nfev=self.max_iter,
-            loss="soft_l1",
-            f_scale=alpha,
+        w0_final = np.zeros(self._X.shape[1] + 2)
+        w0_final[1] = 1.0  # start right_asymptote at 1.0
+        res_final = minimize(
+            fun=objective,
+            x0=w0_final,
+            args=(self._X, self._y, self.alpha_),
+            method="L-BFGS-B",
+            options={"maxiter": self.max_iter},
             **kwargs,
         )
 
-        # Store final parameters
-        self._left_asymptote = result.params["left_asymptote"].value
-        self._right_asymptote = result.params["right_asymptote"].value
-        self._coef_ = np.array(
-            [result.params[f"coef_{i}"].value for i in range(self._X.shape[1])]
-        )
-        self._residuals = self._y - self.predict(self._X)
-        self._cov = (
-            result.covar
-            if result.covar is not None
-            else np.full((len(result.params), len(result.params)), np.nan)
-        )
-        self._jacobian = result.jac if hasattr(result, "jac") else None
+        # Extract final parameters
+        w_best = res_final.x
+        self._left_asymptote = w_best[0]
+        self._right_asymptote = w_best[1]
+        self.coef_ = w_best[2:]
+
+        # Compute residuals on full data
+        linear_combination = np.dot(self._X, self.coef_)
+        pred_full = self._left_asymptote + (
+            self._right_asymptote - self._left_asymptote
+        ) / (1 + np.exp(-linear_combination))
+        self._residuals = self._y - pred_full
+
+        # No direct "cov" from BFGS as in lmfit, so we just store None or empty
+        self._cov = None
+
+        # Store optimization result
+        self.optimization_result_ = res_final
 
         return self
 
@@ -644,10 +630,14 @@ class GeneralizedLogisticModel:
         assert self.llf is not None, "Log-likelihood not available."
         self_log_likelihood = self.llf
 
+        print(f"self_log_likelihood: {self_log_likelihood}")
+
         # Fit the OLS model for comparison
         ols_model = sm.OLS(self.y, self.X)
         ols_results = ols_model.fit()
         log_likelihood_linear = ols_results.llf
+
+        print(f"log_likelihood_linear: {log_likelihood_linear}")
 
         # LRT comparing the full sigmoid model to the linear model
         lrt_statistic_linear = -2 * (log_likelihood_linear - self_log_likelihood)
