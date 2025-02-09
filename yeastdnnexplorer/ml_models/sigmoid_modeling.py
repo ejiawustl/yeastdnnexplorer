@@ -382,7 +382,7 @@ class GeneralizedLogisticModel:
             raise AttributeError(
                 "`df` is not available. Check that `fit()` has been run."
             )
-        if self.X.shape[0] is None:
+        if self.X is None:
             raise AttributeError(
                 "`X.shape[0]` is not available. Check that `fit()` has been run."
             )
@@ -600,9 +600,16 @@ class GeneralizedLogisticModel:
 
         # Compute residuals on full data
         linear_combination = np.dot(self._X, self.coef_)
-        pred_full = self._left_asymptote + (
-            self._right_asymptote - self._left_asymptote
-        ) / (1 + np.exp(-linear_combination))
+        left_asymptote = (
+            self._left_asymptote if self._left_asymptote is not None else 0.0
+        )
+        right_asymptote = (
+            self._right_asymptote if self._right_asymptote is not None else 1.0
+        )
+
+        pred_full = left_asymptote + (right_asymptote - left_asymptote) / (
+            1 + np.exp(-linear_combination)
+        )
         self._residuals = self._y - pred_full
 
         # No direct "cov" from BFGS as in lmfit, so we just store None or empty
