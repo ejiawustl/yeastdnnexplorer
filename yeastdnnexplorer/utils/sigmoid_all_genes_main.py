@@ -26,8 +26,8 @@ from yeastdnnexplorer.utils import LogLevel, configure_logger
 logger = logging.getLogger("main")
 
 # set seeds for reproduciblity
-random.seed(42)
-np.random.seed(42)
+# random.seed(42)
+# np.random.seed(42)
 
 
 def get_significant_predictors(
