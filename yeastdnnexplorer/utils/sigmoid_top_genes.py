@@ -392,7 +392,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         k = interactor_variant["interactor"]
         v = interactor_variant["variant"]
         significant_predictors_top.remove(k)
-        significant_predictors_top.add(v)
+        significant_predictors_top.append(v)
 
     final_model_avg_r_squared_seq = stratified_cv_r2(
         response_seq,
