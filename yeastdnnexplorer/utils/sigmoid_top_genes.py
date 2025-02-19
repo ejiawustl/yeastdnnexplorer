@@ -293,7 +293,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         key,
         response_df,
         predictors_df,
-        quantile_threshold=args.data_quantile,
+        quantile_threshold=0.1,
         drop_intercept=False,
         formula=formula,
     )
