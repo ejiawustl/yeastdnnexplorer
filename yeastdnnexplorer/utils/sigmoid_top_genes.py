@@ -4,12 +4,9 @@ import logging
 import os
 
 # import random
-import re
 import time
 from typing import Any, Literal
 
-import joblib
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from shiny import run_app
@@ -82,7 +79,7 @@ def get_interactor_importance(
     y: pd.DataFrame,
     full_X: pd.DataFrame,
     stratification_classes: np.ndarray,
-    intersect_coefficients: set,
+    intersect_coefficients: list[str],
 ) -> tuple[float, list[dict[str, Any]]]:
     """
     For each interactor in the intersect_coefficients, run test_interactor_importance to
@@ -138,7 +135,7 @@ def get_interactor_importance(
 
 
 def try_interactor_variants(
-    intersect_coefficients: set[str], interactor: str, **kwargs: Any
+    intersect_coefficients: list[str], interactor: str, **kwargs: Any
 ) -> list[dict[str, Any]]:
     """
     For a given interactor, replace the term in the formula with one variant:
@@ -208,11 +205,13 @@ def get_significant_predictors(conf: float, bootstrap_df: pd.DataFrame) -> list[
     Generate a list of features with non-crossing confidence intervals.
 
     Parameters:
-        conf (float): Confidence level for confidence intervals (e.g., 95.0 for 95% confidence).
+        conf (float): Confidence level for confidence intervals (e.g., 95.0 for 95%
+        confidence).
         bootstrap_df (pd.DataFrame): DataFrame containing bootstrap coefficients.
 
     Returns:
-        list[str]: List of significant features whose confidence intervals don't cross zero.
+        list[str]: List of significant features whose CIs don't cross 0.
+
     """
     # Calculate confidence intervals for each feature
     intervals = {
@@ -241,6 +240,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     Run the find_interactors_workflow with the specified arguments.
 
     :param args: The parsed command-line arguments.
+
     """
     output_dirpath = os.path.join(args.output_dir, args.response_tf)
     if os.path.exists(output_dirpath):

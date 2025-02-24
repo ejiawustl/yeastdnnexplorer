@@ -16,10 +16,10 @@ from yeastdnnexplorer.utils.sigmoid import sigmoid
 logger = logging.getLogger("main")
 
 
-class GeneralizedLogisticModel:
+class SimpleSigmoidModel:
     """Generalized logistic model for fitting sigmoidal curves to data."""
 
-    def __init__(self, cv=4, alphas=None, n_alphas=100, eps=1e-12, max_iter=10000):
+    def __init__(self, max_iter=10000, eps=1e-12):
         """Initialize the generalized logistic model."""
         self._X: np.ndarray | None = None
         self._y: np.ndarray | None = None
@@ -29,20 +29,12 @@ class GeneralizedLogisticModel:
         self._cov: np.ndarray | None = None
         self._residuals: np.ndarray | None = None
         self._jacobian: np.ndarray | None = None
-        self.cv = cv
-        self.alphas = alphas
-        self.n_alphas = n_alphas
-        self.eps = eps
         self.max_iter = max_iter
-        self.alpha_ = None
-        self.alphas_ = None
+        self.eps = eps
         # Store initialization parameters for cloning
         self._init_params = {
-            "cv": cv,
-            "alphas": alphas,
-            "n_alphas": n_alphas,
-            "eps": eps,
             "max_iter": max_iter,
+            "eps": eps,
         }
 
     def __copy__(self):
@@ -477,62 +469,21 @@ class GeneralizedLogisticModel:
 
     def fit(self, X, y, sample_weight=None, **kwargs):
         """
-        Fit Generalized Logistic Model with Lasso regularization using cross-validation.
+        Fit Generalized Logistic Model using MSE objective.
 
         :param X: Input data matrix
         :param y: Target values
-        :param sample_weight: Optional sample weights
+        :param sample_weight: Optional sample weights (not used)
         :param kwargs: Additional arguments passed to minimize
         :return: self
 
         """
         self._X = np.asarray(X)
-        # potentially need to do .ravel() here
         self._y = np.asarray(y).ravel()
 
-        # Generate alphas if not provided
-        if self.alphas is None:
-            y_scale = np.std(self._y)
-            alpha_max = np.abs(self._X.T @ self._y).max() / (len(self._y) * y_scale)
-            self.alphas_ = np.logspace(
-                np.log10(alpha_max * self.eps), np.log10(alpha_max), num=self.n_alphas
-            )
-        else:
-            # Convert alphas to numpy array if it's a list
-            self.alphas_ = np.asarray(self.alphas)
-
-        # Initialize arrays to store CV scores
-        n_alphas = len(self.alphas_)
-        n_folds = self.cv if isinstance(self.cv, int) else len(self.cv)
-        cv_scores = np.zeros((n_alphas, n_folds))
-
-        # starting here: make it integrate stratified folds
-        # Split data into CV folds
-        if isinstance(self.cv, int):
-            n_samples = len(self._y)
-            fold_size = n_samples // n_folds
-            indices = np.arange(n_samples)
-            np.random.shuffle(indices)
-            folds = [
-                (
-                    indices[fold * fold_size : (fold + 1) * fold_size],
-                    np.concatenate(
-                        [indices[: fold * fold_size], indices[(fold + 1) * fold_size :]]
-                    ),
-                )
-                for fold in range(n_folds)
-            ]
-        else:
-            folds = self.cv
-
-        def objective(w, X_local, y_local, alpha_local):
-            """
-            Single scalar objective:
-            SSE (or weighted SSE) + alpha * L1(coefs).
-            w[0] = left_asymptote
-            w[1] = right_asymptote
-            w[2:] = coefficients
-            """
+        def objective(w, X_local, y_local):
+            """MSE objective function w[0] = left_asymptote w[1] = right_asymptote w[2:]
+            = coefficients."""
             linear_combination = np.dot(X_local, w[2:])
             left_asymptote = w[0]
             right_asymptote = w[1]
@@ -540,70 +491,27 @@ class GeneralizedLogisticModel:
                 1 + np.exp(-linear_combination)
             )
             residual = y_local - pred
-            sse = np.sum(residual**2)
-            # L1 penalty on the *coef* part only (NOT the asymptotes).
-            # If you do want to penalize the asymptotes, you could change to w[:]
-            penalty = alpha_local * np.sum(np.abs(w[2:]))
-            return sse + penalty
+            return np.sum(residual**2)  # MSE
 
-        # Cross validation loop for each alpha
-        for alpha_idx, alpha in enumerate(self.alphas_):
-            for fold_idx, (train_idx, test_idx) in enumerate(folds):
-                X_train, X_test = self._X[train_idx], self._X[test_idx]
-                y_train, y_test = self._y[train_idx], self._y[test_idx]
+        # Initialize parameters
+        w0 = np.zeros(self._X.shape[1] + 2)
+        w0[1] = 1.0
 
-                # Initialize parameters
-                w0 = np.zeros(X_train.shape[1] + 2)
-                w0[1] = 1.0  # e.g. start right_asymptote at 1.0
-
-                # Run optimization
-                res = minimize(
-                    fun=objective,
-                    x0=w0,
-                    args=(X_train, y_train, alpha),
-                    method="L-BFGS-B",  # or "BFGS", etc.
-                    options={
-                        "maxiter": self.max_iter,
-                        "ftol": self.eps,
-                        "gtol": self.eps,
-                    },
-                    **kwargs,
-                )
-
-                # Evaluate on test data
-                w_opt = res.x
-                linear_combination = np.dot(X_test, w_opt[2:])
-                left_asymptote = w_opt[0]
-                right_asymptote = w_opt[1]
-                pred_test = left_asymptote + (right_asymptote - left_asymptote) / (
-                    1 + np.exp(-linear_combination)
-                )
-                mse = np.mean((y_test - pred_test) ** 2)
-                cv_scores[alpha_idx, fold_idx] = mse
-
-        # Find best alpha
-        mean_cv_scores = np.mean(cv_scores, axis=1)
-        best_alpha_idx = np.argmin(mean_cv_scores)
-        self.alpha_ = self.alphas_[best_alpha_idx]
-
-        w0_final = np.zeros(self._X.shape[1] + 2)
-        w0_final[1] = 1.0  # start right_asymptote at 1.0
-
-        res_final = minimize(
+        # Run optimization
+        res = minimize(
             fun=objective,
-            x0=w0_final,
-            args=(self._X, self._y, self.alpha_),
+            x0=w0,
+            args=(self._X, self._y),
             method="L-BFGS-B",
-            options={"maxiter": self.max_iter},
+            options={"maxiter": self.max_iter, "ftol": self.eps, "gtol": self.eps},
             **kwargs,
         )
 
         # Extract final parameters
-        w_best = res_final.x
+        w_best = res.x
         self._left_asymptote = w_best[0]
         self._right_asymptote = w_best[1]
         self.coef_ = w_best[2:]
-
         # Compute residuals on full data
         linear_combination = np.dot(self._X, self.coef_)
         left_asymptote = (
@@ -612,19 +520,14 @@ class GeneralizedLogisticModel:
         right_asymptote = (
             self._right_asymptote if self._right_asymptote is not None else 1.0
         )
-
         pred_full = left_asymptote + (right_asymptote - left_asymptote) / (
             1 + np.exp(-linear_combination)
         )
-        print(f"pred_full: {pred_full}")
-        print(f"self._y: {self._y}")
+
         self._residuals = self._y - pred_full
 
-        # No direct "cov" from BFGS as in lmfit, so we just store None or empty
-        self._cov = None
-
         # Store optimization result
-        self.optimization_result_ = res_final
+        self.optimization_result_ = res
 
         return self
 
@@ -715,7 +618,7 @@ class GeneralizedLogisticModel:
             ]  # Take the first i columns (this removes the last column first)
 
             # Fit a reduced model with fewer columns
-            reduced_model = GeneralizedLogisticModel()
+            reduced_model = SimpleSigmoidModel()
             reduced_model.fit(X_reduced, self.y)  # Fixed: Swapped X and y arguments
 
             # Calculate log-likelihood for the reduced model
@@ -809,9 +712,6 @@ class GeneralizedLogisticModel:
 
         """
         return {
-            "cv": self.cv,
-            "alphas": self.alphas,
-            "n_alphas": self.n_alphas,
             "eps": self.eps,
             "max_iter": self.max_iter,
         }

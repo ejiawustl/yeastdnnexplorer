@@ -518,6 +518,7 @@ def examine_bootstrap_coefficients(
 
     # Identify coefficients with confidence intervals entirely above or
     # below the threshold, with a minimum distance from zero.
+    # We always ignore the Intercept because it is not a true predictor
     significant_coefs_dict = {
         coef: bounds
         for coef, bounds in ci_dict_local[ci_level].items()
@@ -594,10 +595,13 @@ def get_significant_predictors(
             "Must be one of ['lassocv_ols', 'bootstrap_lassocv']"
         )
 
-    # this is the first part of the code that checks for the edge case in which the main
-    # effect isn't in the formula if it is not there, then we must add it when
-    # generating the modeling data, and then ignore it for the actual modeling which
-    # is done by the other part of the code in this method and in bootstrap_cv_modeling
+    # this is the first part of the code that checks for the particular scenario in
+    # which the main effect isn't in the formula if it is not there, then we must add it
+    # when generating the modeling data, and then ignore it for the actual modeling
+    # which is done by the other part of the code in this method and in
+    # bootstrap_cv_modeling
+    # TODO: modify generate_modeling_data to avoid the requirement of having the
+    # main effect in the columns
     formula = kwargs.get("formula", None)
     if formula:
         lhs, rhs = formula.split("~")
@@ -664,6 +668,8 @@ def get_significant_predictors(
         # to use it in this method to stratify datapoints for bootstrapping. This check
         # will enure that during bootstrap_stratified_cv_modeling we ultimately don't
         # also pass in the main effect
+        # NOTE: hacky, because generate_modeling_data() requires main effect.
+        # See issue in git.
         formula = kwargs.get("formula", None)
         ignore_main_effect = False  # Default to False
 
