@@ -387,31 +387,36 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         significant_predictors_top,
     )
 
-    # Update final features based on interactor results (no change needed here)
+    # Update final features based on interactor results we remove all interactors whose
+    # main effects improved r^2
     for interactor_variant in interactor_results_seq:
         k = interactor_variant["interactor"]
-        v = interactor_variant["variant"]
         significant_predictors_top.remove(k)
-        significant_predictors_top.append(v)
 
-    final_model_avg_r_squared_seq = stratified_cv_r2(
-        response_seq,
-        full_X_seq[list(significant_predictors_top)],
-        classes_seq,
-        estimator=GeneralizedLogisticModel(),
-    )
+    # check if there are still significant predictors left - proceed if so
+    if significant_predictors_top:
+        final_preds = list(significant_predictors_top)
+        # need to add intercept for sigmoid modeling
+        final_preds.insert(0, "Intercept")
 
-    # Prepare output dictionary
-    output_dict_seq = {
-        "response_tf": args.response_tf,
-        "final_features": list(significant_predictors_top),
-        "final_model_avg_r_squared": final_model_avg_r_squared_seq,
-    }
+        final_model_avg_r_squared_seq = stratified_cv_r2(
+            response_seq,
+            full_X_seq[final_preds],
+            classes_seq,
+            estimator=GeneralizedLogisticModel(),
+        )
 
-    # Save the output
-    output_path_seq = os.path.join(output_dirpath, "final_output_sequential.json")
-    with open(output_path_seq, "w") as f:
-        json.dump(output_dict_seq, f, indent=4)
+        # Prepare output dictionary
+        output_dict_seq = {
+            "response_tf": args.response_tf,
+            "final_features": final_preds,
+            "final_model_avg_r_squared": final_model_avg_r_squared_seq,
+        }
+
+        # Save the output
+        output_path_seq = os.path.join(output_dirpath, "final_output_sequential.json")
+        with open(output_path_seq, "w") as f:
+            json.dump(output_dict_seq, f, indent=4)
 
 
 class CustomHelpFormatter(argparse.HelpFormatter):

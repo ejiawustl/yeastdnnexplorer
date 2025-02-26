@@ -616,8 +616,7 @@ class GeneralizedLogisticModel:
         pred_full = left_asymptote + (right_asymptote - left_asymptote) / (
             1 + np.exp(-linear_combination)
         )
-        print(f"pred_full: {pred_full}")
-        print(f"self._y: {self._y}")
+
         self._residuals = self._y - pred_full
 
         # No direct "cov" from BFGS as in lmfit, so we just store None or empty
