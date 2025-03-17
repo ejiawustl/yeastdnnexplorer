@@ -231,7 +231,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             predictors_df,
             ci_percentile=args.all_ci_percentile,
             n_bootstraps=args.n_bootstraps,
-            add_max_lrb=False,
+            add_max_lrb=True,
         ),
         "top": get_significant_predictors(
             args.method,
@@ -240,7 +240,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             predictors_df,
             ci_percentile=args.top_ci_percentile,
             n_bootstraps=args.n_bootstraps,
-            add_max_lrb=False,
+            add_max_lrb=True,
             quantile_threshold=args.data_quantile,
         ),
     }
@@ -271,18 +271,12 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
 
         # Build the formula using these predictors
         response_variable = f"{args.response_tf}_LRR"
-        predictor_variable = re.sub(r"_rep\\d+", "", args.response_tf)
 
         # Ensure the main effect of the perturbed TF is included
         formula_terms = significant_predictors_all.copy()
-        if predictor_variable not in formula_terms:
-            formula_terms.insert(0, predictor_variable)
 
         # Build the formula string
         formula = f"{response_variable} ~ {' + '.join(formula_terms)}"
-
-        # Add '-1' to the formula if drop_intercept is True
-        formula += " - 1"
 
         # Run get_significant_predictors with the custom formula
         sequential_lasso_res = get_significant_predictors(
@@ -413,6 +407,8 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     # Add the max_lrb column, just in case it is present in the final_predictors.
     # In this case, it is not.
     model_tf = re.sub("_rep\\d+", "", args.response_tf)
+    max_lrb = predictors_df.drop(columns=model_tf).max(axis=1)
+    full_X["max_lrb"] = max_lrb
 
     # Currently, this function tests each interactor term in the final_features
     # with two variants by replacing the interaction term with the main effect only, and
@@ -426,36 +422,37 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
         final_features,
     )
 
-    # use the interactor_results to update the final_features
+    # use the interactor_results to update the final_features - we remove all
+    # interactors whose main effects improved r^2
     for interactor_variant in interactor_results:
         k = interactor_variant["interactor"]
-        v = interactor_variant["variant"]
         final_features.remove(k)
-        final_features.add(v)
 
-    # Step 4: compare the results of the final model with a univariate model
-    avg_r2_univariate = stratified_cv_r2(
-        lasso_res["all"]["response"],
-        all_predictors[[model_tf]],
-        lasso_res["all"]["classes"],
-    )
+    # check if there are significant remaining features - proceed with last step if so
+    if final_features:
+        # Step 4: compare the results of the final model with a univariate model
+        avg_r2_univariate = stratified_cv_r2(
+            lasso_res["all"]["response"],
+            all_predictors[[model_tf]],
+            lasso_res["all"]["classes"],
+        )
 
-    final_model_avg_r_squared = stratified_cv_r2(
-        lasso_res["all"]["response"],
-        full_X[list(final_features)],
-        lasso_res["all"]["classes"],
-    )
+        final_model_avg_r_squared = stratified_cv_r2(
+            lasso_res["all"]["response"],
+            full_X[list(final_features)],
+            lasso_res["all"]["classes"],
+        )
 
-    output_dict = {
-        "response_tf": args.response_tf,
-        "final_features": list(final_features),
-        "avg_r2_univariate": avg_r2_univariate,
-        "final_model_avg_r_squared": final_model_avg_r_squared,
-    }
+        output_dict = {
+            "response_tf": args.response_tf,
+            "final_features": list(final_features),
+            "avg_r2_univariate": avg_r2_univariate,
+            "final_model_avg_r_squared": final_model_avg_r_squared,
+        }
 
-    output_path = os.path.join(output_dirpath, "final_output.json")
-    with open(output_path, "w") as f:
-        json.dump(output_dict, f, indent=4)
+        output_path = os.path.join(output_dirpath, "final_output.json")
+        with open(output_path, "w") as f:
+            json.dump(output_dict, f, indent=4)
 
     # If bootstrap_lassocv is the chosen method, need to repeat steps 3 and 4 for the
     # sequential results
@@ -496,6 +493,9 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             drop_intercept=False,
         )
 
+        # Add max_lrb column
+        full_X_seq["max_lrb"] = max_lrb
+
         # Use the response and classes from the "all" data (NOT sequential data)
         response_seq = lasso_res["all"]["response"]
         classes_seq = lasso_res["all"]["classes"]
@@ -511,41 +511,42 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             sequential_final_features,
         )
 
-        # Update final features based on interactor results (no change needed here)
+        # Update final features based on interactor results - we remove all interactors
+        # whose main effects improved r^2
         for interactor_variant in interactor_results_seq:
             k = interactor_variant["interactor"]
-            v = interactor_variant["variant"]
             sequential_final_features.remove(k)
-            sequential_final_features.add(v)
 
-        # Step 4: Compare results of final model vs. a univariate model on "all" data
-        assert isinstance(lasso_res["all"]["predictors"], pd.DataFrame)
-        avg_r2_univariate_seq = stratified_cv_r2(
-            response_seq,
-            lasso_res["all"]["predictors"][[model_tf]],
-            classes_seq,
-        )
+        # check if there are remaining features: proceed with last step if so
+        if sequential_final_features:
+            # Step 4: Compare results of final model vs. univariate model on "all" data
+            assert isinstance(lasso_res["all"]["predictors"], pd.DataFrame)
+            avg_r2_univariate_seq = stratified_cv_r2(
+                response_seq,
+                lasso_res["all"]["predictors"][[model_tf]],
+                classes_seq,
+            )
 
-        final_model_avg_r_squared_seq = stratified_cv_r2(
-            response_seq,
-            full_X_seq[list(sequential_final_features)],
-            classes_seq,
-        )
+            final_model_avg_r_squared_seq = stratified_cv_r2(
+                response_seq,
+                full_X_seq[list(sequential_final_features)],
+                classes_seq,
+            )
 
-        # Prepare output dictionary
-        output_dict_seq = {
-            "response_tf": args.response_tf,
-            "final_features": list(sequential_final_features),
-            "avg_r2_univariate": avg_r2_univariate_seq,
-            "final_model_avg_r_squared": final_model_avg_r_squared_seq,
-        }
+            # Prepare output dictionary
+            output_dict_seq = {
+                "response_tf": args.response_tf,
+                "final_features": list(sequential_final_features),
+                "avg_r2_univariate": avg_r2_univariate_seq,
+                "final_model_avg_r_squared": final_model_avg_r_squared_seq,
+            }
 
-        # Save the output
-        output_path_seq = os.path.join(
-            sequential_output_dir, "final_output_sequential.json"
-        )
-        with open(output_path_seq, "w") as f:
-            json.dump(output_dict_seq, f, indent=4)
+            # Save the output
+            output_path_seq = os.path.join(
+                sequential_output_dir, "final_output_sequential.json"
+            )
+            with open(output_path_seq, "w") as f:
+                json.dump(output_dict_seq, f, indent=4)
 
 
 class CustomHelpFormatter(argparse.HelpFormatter):
