@@ -231,7 +231,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             predictors_df,
             ci_percentile=args.all_ci_percentile,
             n_bootstraps=args.n_bootstraps,
-            add_max_lrb=True,
+            add_max_lrb=False,
         ),
         "top": get_significant_predictors(
             args.method,
@@ -240,7 +240,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             predictors_df,
             ci_percentile=args.top_ci_percentile,
             n_bootstraps=args.n_bootstraps,
-            add_max_lrb=True,
+            add_max_lrb=False,
             quantile_threshold=args.data_quantile,
         ),
     }
@@ -292,7 +292,7 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             predictors_df,
             ci_percentile=args.top_ci_percentile,
             n_bootstraps=args.n_bootstraps,
-            add_max_lrb=True,
+            add_max_lrb=False,
             quantile_threshold=args.data_quantile,
             formula=formula,  # Pass the formula via kwargs
         )
@@ -413,8 +413,6 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
     # Add the max_lrb column, just in case it is present in the final_predictors.
     # In this case, it is not.
     model_tf = re.sub("_rep\\d+", "", args.response_tf)
-    max_lrb = predictors_df.drop(columns=model_tf).max(axis=1)
-    full_X["max_lrb"] = max_lrb
 
     # Currently, this function tests each interactor term in the final_features
     # with two variants by replacing the interaction term with the main effect only, and
@@ -497,9 +495,6 @@ def find_interactors_workflow(args: argparse.Namespace) -> None:
             formula=f"~ {' + '.join(interactor_terms_and_main_effects_seq)}",
             drop_intercept=False,
         )
-
-        # Add max_lrb column
-        full_X_seq["max_lrb"] = max_lrb
 
         # Use the response and classes from the "all" data (NOT sequential data)
         response_seq = lasso_res["all"]["response"]
